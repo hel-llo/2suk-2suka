@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>2suk-2suka</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "primary": "#da0b0b",
+          "background-light": "#f8f5f5",
+          "background-dark": "#1a0808",
+          "card-cream": "#fff9f0",
+        },
+        fontFamily: { "display": ["Space Grotesk"] },
+        borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+      },
+    },
+  }
+</script>
+<style>
+  body { font-family: 'Space Grotesk', sans-serif; min-height: max(884px, 100dvh); }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+
+  /* Toast */
+  #toast {
+    position: fixed; bottom: 110px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #0f172a; color: white;
+    padding: 10px 20px; border-radius: 99px;
+    font-size: 13px; font-weight: 600;
+    opacity: 0; transition: all 0.3s; z-index: 200;
+    white-space: nowrap;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* Cart button bounce */
+  @keyframes bounce-once {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+  .bounce { animation: bounce-once 0.3s ease; }
+</style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen pb-32">
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Header -->
+<header class="sticky top-0 z-50 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-primary/20 p-4">
+  <div class="max-w-md mx-auto flex flex-col items-center gap-2">
+    <div class="flex items-center justify-between w-full">
+      <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+        <span class="material-symbols-outlined text-primary">menu</span>
+      </div>
+      <img alt="2suk-2suka logo" class="h-12 w-auto object-contain"
+        src="https://lh3.googleusercontent.com/aida-public/AB6AXuAEeMSirO2NWJoctVwQScYM_TZotpxzb6oMKHdColvsO91QW80UvHR5TzEs_yMKDK5YgaBoBO7Nil0xz7MYCrA-GI0NBpAwkJJYm-SPKTQDYn0dWbqPbyZVTPz8pbM27qZsr_M154BOc6xdRD4T2cqL5oVBNY_cwdpqj0eEBQ6crLH4_HxTbg5b32XGMXAszcW52dIO4FyVkjNixtdzMLS1KC-GGQqXlNO1b4T4-p3MldQN4kNOKGVPtLsciBsW-imT4GG3KnhKSEHQ"/>
+      <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+        <span class="material-symbols-outlined text-primary">search</span>
+      </div>
+    </div>
+    <p class="text-primary font-bold italic tracking-wide text-sm">"Stick together, tusok forever"</p>
+  </div>
+</header>
+
+<main class="max-w-md mx-auto px-4 pt-6">
+
+  <!-- Fried Section -->
+  <section class="mb-8">
+    <div class="flex items-center gap-2 mb-4">
+      <span class="material-symbols-outlined text-primary">whatshot</span>
+      <h2 class="text-2xl font-bold tracking-tight">Fried</h2>
+    </div>
+    <div class="space-y-4">
+
+      <!-- Fishball -->
+      <div class="bg-card-cream dark:bg-slate-800 rounded-xl overflow-hidden shadow-lg border-l-4 border-primary flex">
+        <div class="w-1/3 bg-cover bg-center min-h-[100px]" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC2mkvm9fM4L6D1lOcPd9Vf402Isubh0wngPj0EQzClxN3Na6RQD4c9RLBGfdUuS1MW88rIqmJN1QA0ltzV7sLEjnIiBo1ecH0MMPih6qZkEcmfI1kC5pM2JBQ-BYck4iBjnvHpqKVYCaiyusgXYT6dqWTaj8KutWCMZWeIRzo-sMx7V-oHkXfvB7fjp2SLinQON2XoVonEwoyfAIpJC3rYT_w4AJcnWgJAwAD2VvrqdtRTmUpLX3s3P3EBwjpacmzzSPG3vHJyoD2c')"></div>
+        <div class="flex-1 p-4 flex flex-col gap-3">
+          <div class="flex justify-between items-start">
+            <h3 class="font-bold text-lg">Fishball</h3>
+            <span class="text-primary font-bold text-lg">₱1</span>
+          </div>
+          <div class="flex gap-2 items-center">
+            <select class="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-xs py-1 px-2">
+              <option>Sweet Sauce</option>
+              <option>Spicy Sauce</option>
+              <option>Mix Sauce</option>
+            </select>
+            <div class="flex items-center bg-primary rounded-lg text-white">
+              <button onclick="updateQty('fishball', -1)" class="px-2 py-1"><span class="material-symbols-outlined text-sm">remove</span></button>
+              <span id="qty-fishball" class="px-2 font-bold text-sm">0</span>
+              <button onclick="updateQty('fishball', 1)" class="px-2 py-1"><span class="material-symbols-outlined text-sm">add</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Kikiam -->
+      <div class="bg-card-cream dark:bg-slate-800 rounded-xl overflow-hidden shadow-lg border-l-4 border-primary flex">
+        <div class="w-1/3 bg-cover bg-center min-h-[100px]" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBOH1tgb-NpT88do2nGgkRXvrHsMZNLVcrbgwm3Sc0AXnuACMXl-Sv05e2CpbwBgHg3j7rsJaOBmYxs-EtRzQkhEp9x10jKV-SWxsYlCPTGoCC4YKPbuguant9U2101htlxNhdNqL5YtX4cNVD49UeYLfQ1fMdZq8nZq9JiXvfTpU-rulPJRKhPmst-xJhYJF1p6324XmktOi4F2oJgz7RsOigkVHkTm8stcgPdF9oBuL302j1wjcjeEGHAZXIIjDaejpwMsdnByNOm')"></div>
+        <div class="flex-1 p-4 flex flex-col gap-3">
+          <div class="flex justify-between items-start">
+            <h3 class="font-bold text-lg">Kikiam</h3>
+            <span class="text-primary font-bold text-lg">₱2.50</span>
+          </div>
+          <div class="flex gap-2 items-center">
+            <select class="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-xs py-1 px-2">
+              <option>Sweet Sauce</option>
+              <option>Spicy Sauce</option>
+              <option>Mix Sauce</option>
+            </select>
+            <div class="flex items-center bg-primary rounded-lg text-white">
+              <button onclick="updateQty('kikiam', -1)" class="px-2 py-1"><span class="material-symbols-outlined text-sm">remove</span></button>
+              <span id="qty-kikiam" class="px-2 font-bold text-sm">0</span>
+              <button onclick="updateQty('kikiam', 1)" class="px-2 py-1"><span class="material-symbols-outlined text-sm">add</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Squidball -->
+      <div class="bg-card-cream dark:bg-slate-800 rounded-xl overflow-hidden shadow-lg border-l-4 border-primary flex">
+        <div class="w-1/3 bg-cover bg-center min-h-[100px]" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuASVCNS4I_lgWyfVFSgDo8-hefJ_Lkld7QDVwpns8gpr-ry5NxDOoQdMYcbvPWHCvCfxOkKBZIykdiAVGqbB0BiJ4VTXZdfgz3QOwoFboBrGfQlREmiJkBwppIKOYXmR6_Gkyv_eaorWXgx6GWIQjqViF7tv-KUa7UpyGLjPtmyFdflLJpF4nW655kcntSku0-sj1nSdwLgM9d52sMv14v2sIL2r9vmQ6bL16Lt7ckxWgwGQBWC0KKU0lNxXKgXJV6iTwb580CaJyrv')"></div>
+        <div class="flex-1 p-4 flex flex-col gap-3">
+          <div class="flex justify-between items-start">
+            <h3 class="font-bold text-lg">Squidball</h3>
+            <span class="text-primary font-bold text-lg">₱5</span>
+          </div>
+          <div class="flex gap-2 items-center">
+            <select class="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-xs py-1 px-2">
+              <option>Sweet Sauce</option>
+              <option>Spicy Sauce</option>
+              <option>Mix Sauce</option>
+            </select>
+            <div class="flex items-center bg-primary rounded-lg text-white">
+              <button onclick="updateQty('squidball', -1)" class="px-2 py-1"><span class="material-symbols-outlined text-sm">remove</span></button>
+              <span id="qty-squidball" class="px-2 font-bold text-sm">0</span>
+              <button onclick="updateQty('squidball', 1)" class="px-2 py-1"><span class="material-symbols-outlined text-sm">add</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Grills / Steamed Section -->
+  <section class="mb-8">
+    <div class="flex items-center gap-2 mb-4">
+      <span class="material-symbols-outlined text-primary">soup_kitchen</span>
+      <h2 class="text-2xl font-bold tracking-tight">Grills / Steamed</h2>
+    </div>
+    <div class="space-y-4">
+
+      <!-- BBQ -->
+      <div class="bg-card-cream dark:bg-slate-800 rounded-xl overflow-hidden shadow-lg border-l-4 border-primary flex">
+        <div class="w-1/3 bg-cover bg-center min-h-[100px]" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAeXIpryEsa7xu6RPMxhL8oG53I1fXs4LfkzaubpglFqrf3CTYv4idtoNBptt-zMeo8IJAmhy8n9syBsqo-ZrA8aabC_O920IMwSXVUPErqP72Tl9ipFyneD_UKeGSJLQvFWv5S4uqxstnHlNpE1aaUgccisSe0qq8A1jkyZiGTSHs7YuHdQ-CbFBPN7g45Wui-w6yc4pHgJ3VzjcIxAMEYgLG-9iDS_xbZaqyH5bK1wFYeus8D8zDKcX5v7H8b9onY08nXTNjs0QFs')"></div>
+        <div class="flex-1 p-4 flex flex-col gap-3">
+          <div class="flex justify-between items-start">
+            <h3 class="font-bold text-lg">BBQ</h3>
+            <span class="text-primary font-bold text-lg">₱15</span>
+          </div>
+          <div class="flex gap-2 items-center">
+            <select class="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-xs py-1 px-2">
+              <option>Spicy Glaze</option>
+              <option>Sweet Glaze</option>
+              <option>No Glaze</option>
+            </select>
+            <div class="flex items-center bg-primary rounded-lg text-white">
+              <button onclick="updateQty('bbq', -1)" class="px-2 py-1"><span class="material-symbols-outlined text-sm">remove</span></button>
+              <span id="qty-bbq" class="px-2 font-bold text-sm">0</span>
+              <button onclick="updateQty('bbq', 1)" class="px-2 py-1"><span class="material-symbols-outlined text-sm">add</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Siomai -->
+      <div class="bg-card-cream dark:bg-slate-800 rounded-xl overflow-hidden shadow-lg border-l-4 border-primary flex">
+        <div class="w-1/3 bg-cover bg-center min-h-[100px]" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuALQlNVfZuZ-n5O6cSu2oJ7TxuN6U6dTWhn_gKAujJ9t94ZchfQUiEiGaBqLcL0NVxqVASHIktosz-uEsVT1reMKpicYQMRJ_SCbdHIAziigY5wwweSm83asJ58d8Di2XiaoJIoAO2URgEqP_iV8I8_jMKIA1TH6rxm1g6jllq5wVZYaiRXdcMkSAa1fWPnQ5lwQ6teJjG3CKttDgPTjJFvrGM18IuJDElelC4npoI7lTWMD-n5X3uPXcMDyci721EUy7WSV2iiy-ir')"></div>
+        <div class="flex-1 p-4 flex flex-col gap-3">
+          <div class="flex justify-between items-start">
+            <h3 class="font-bold text-lg">Siomai</h3>
+            <span class="text-primary font-bold text-lg">₱25</span>
+          </div>
+          <div class="flex gap-2 items-center">
+            <select class="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-xs py-1 px-2">
+              <option>Chili Garlic</option>
+              <option>Soy & Calamansi</option>
+              <option>Plain</option>
+            </select>
+            <div class="flex items-center bg-primary rounded-lg text-white">
+              <button onclick="updateQty('siomai', -1)" class="px-2 py-1"><span class="material-symbols-outlined text-sm">remove</span></button>
+              <span id="qty-siomai" class="px-2 font-bold text-sm">0</span>
+              <button onclick="updateQty('siomai', 1)" class="px-2 py-1"><span class="material-symbols-outlined text-sm">add</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Siopao -->
+      <div class="bg-card-cream dark:bg-slate-800 rounded-xl overflow-hidden shadow-lg border-l-4 border-primary flex">
+        <div class="w-1/3 bg-cover bg-center min-h-[100px]" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBDNqscom70WXtwmvaTKw3t1l6pzoscuvxZ3R_mX7gWDZ99kIwn6SaIwtEa52y-_Y8cfakKoSc-cBokcykURCzQVry7jdqBpJ-pvW9iQ6nWHRpZXkgXI1OzgGsLHX7E52hI0ueptu03vAMZ1cGe22sjxZ5NuFQ8jSyzBxzDZWgnjTB23PYBiA_Ob3bnniwfRysv9KTyiBxmqDv_sCppEduJ-bsXnVUxcE4fojjZNrkjM10q8KffPZGzNYBIsiJbx3PwyrY9TL741RZt')"></div>
+        <div class="flex-1 p-4 flex flex-col gap-3">
+          <div class="flex justify-between items-start">
+            <h3 class="font-bold text-lg">Siopao</h3>
+            <span class="text-primary font-bold text-lg">₱35</span>
+          </div>
+          <div class="flex gap-2 items-center">
+            <select class="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-xs py-1 px-2">
+              <option>Asado Sauce</option>
+              <option>Bola-Bola Sauce</option>
+            </select>
+            <div class="flex items-center bg-primary rounded-lg text-white">
+              <button onclick="updateQty('siopao', -1)" class="px-2 py-1"><span class="material-symbols-outlined text-sm">remove</span></button>
+              <span id="qty-siopao" class="px-2 font-bold text-sm">0</span>
+              <button onclick="updateQty('siopao', 1)" class="px-2 py-1"><span class="material-symbols-outlined text-sm">add</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<!-- Bottom Nav & Cart Button -->
+<div class="fixed bottom-0 left-0 right-0 bg-background-light dark:bg-background-dark border-t border-primary/20 z-50">
+  <div class="max-w-md mx-auto">
+    <div class="p-4">
+      <button id="cartBtn" onclick="goToCart()" class="w-full bg-primary hover:bg-red-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-primary/30 transition-colors">
+        <span class="material-symbols-outlined">shopping_cart</span>
+        <span id="cartBtnText">View Cart (0 Items)</span>
+        <span id="cartTotal" class="ml-auto text-sm opacity-80"></span>
+      </button>
+    </div>
+    <div class="flex justify-around items-center pb-6 pt-2">
+      <a href="index.html" class="flex flex-col items-center gap-1 text-primary">
+        <span class="material-symbols-outlined">restaurant_menu</span>
+        <span class="text-[10px] font-bold uppercase tracking-wider">Menu</span>
+      </a>
+      <a href="tracking.html" class="flex flex-col items-center gap-1 text-slate-400">
+        <span class="material-symbols-outlined">receipt_long</span>
+        <span class="text-[10px] font-bold uppercase tracking-wider">Orders</span>
+      </a>
+      <a href="#" class="flex flex-col items-center gap-1 text-slate-400">
+        <span class="material-symbols-outlined">person</span>
+        <span class="text-[10px] font-bold uppercase tracking-wider">Profile</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+  const CATEGORIES = [
+    { key: 'fried',  label: 'Fried',            icon: 'whatshot'     },
+    { key: 'grill',  label: 'Grilled / Steamed', icon: 'soup_kitchen' },
+    { key: 'drinks', label: 'Drinks',            icon: 'local_bar'    },
+    { key: 'snacks', label: 'Snacks',            icon: 'cookie'       },
+    { key: 'rice',   label: 'Rice Meals',        icon: 'rice_bowl'    },
+    { key: 'others', label: 'Others',            icon: 'category'     },
+  ];
+
+  const DEFAULT_PRODUCTS = [
+    { id: 1, name: 'Fishball',  price: 1,    unit: 'pc',    available: true,  category: 'fried', options: ['Sweet Sauce','Spicy Sauce','Mix Sauce'], img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC2mkvm9fM4L6D1lOcPd9Vf402Isubh0wngPj0EQzClxN3Na6RQD4c9RLBGfdUuS1MW88rIqmJN1QA0ltzV7sLEjnIiBo1ecH0MMPih6qZkEcmfI1kC5pM2JBQ-BYck4iBjnvHpqKVYCaiyusgXYT6dqWTaj8KutWCMZWeIRzo-sMx7V-oHkXfvB7fjp2SLinQON2XoVonEwoyfAIpJC3rYT_w4AJcnWgJAwAD2VvrqdtRTmUpLX3s3P3EBwjpacmzzSPG3vHJyoD2c' },
+    { id: 2, name: 'Kikiam',    price: 2.5,  unit: 'pc',    available: true,  category: 'fried', options: ['Sweet Sauce','Spicy Sauce','Mix Sauce'], img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBOH1tgb-NpT88do2nGgkRXvrHsMZNLVcrbgwm3Sc0AXnuACMXl-Sv05e2CpbwBgHg3j7rsJaOBmYxs-EtRzQkhEp9x10jKV-SWxsYlCPTGoCC4YKPbuguant9U2101htlxNhdNqL5YtX4cNVD49UeYLfQ1fMdZq8nZq9JiXvfTpU-rulPJRKhPmst-xJhYJF1p6324XmktOi4F2oJgz7RsOigkVHkTm8stcgPdF9oBuL302j1wjcjeEGHAZXIIjDaejpwMsdnByNOm' },
+    { id: 3, name: 'Squidball', price: 5,    unit: 'pc',    available: true,  category: 'fried', options: ['Sweet Sauce','Spicy Sauce','Mix Sauce'], img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuASVCNS4I_lgWyfVFSgDo8-hefJ_Lkld7QDVwpns8gpr-ry5NxDOoQdMYcbvPWHCvCfxOkKBZIykdiAVGqbB0BiJ4VTXZdfgz3QOwoFboBrGfQlREmiJkBwppIKOYXmR6_Gkyv_eaorWXgx6GWIQjqViF7tv-KUa7UpyGLjPtmyFdflLJpF4nW655kcntSku0-sj1nSdwLgM9d52sMv14v2sIL2r9vmQ6bL16Lt7ckxWgwGQBWC0KKU0lNxXKgXJV6iTwb580CaJyrv' },
+    { id: 4, name: 'BBQ',       price: 15,   unit: 'stick', available: false, category: 'grill', options: ['Spicy Glaze','Sweet Glaze','No Glaze'],  img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAeXIpryEsa7xu6RPMxhL8oG53I1fXs4LfkzaubpglFqrf3CTYv4idtoNBptt-zMeo8IJAmhy8n9syBsqo-ZrA8aabC_O920IMwSXVUPErqP72Tl9ipFyneD_UKeGSJLQvFWv5S4uqxstnHlNpE1aaUgccisSe0qq8A1jkyZiGTSHs7YuHdQ-CbFBPN7g45Wui-w6yc4pHgJ3VzjcIxAMEYgLG-9iDS_xbZaqyH5bK1wFYeus8D8zDKcX5v7H8b9onY08nXTNjs0QFs' },
+    { id: 5, name: 'Siomai',    price: 25,   unit: 'pc',    available: true,  category: 'grill', options: ['Chili Garlic','Soy & Calamansi','Plain'], img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuALQlNVfZuZ-n5O6cSu2oJ7TxuN6U6dTWhn_gKAujJ9t94ZchfQUiEiGaBqLcL0NVxqVASHIktosz-uEsVT1reMKpicYQMRJ_SCbdHIAziigY5wwweSm83asJ58d8Di2XiaoJIoAO2URgEqP_iV8I8_jMKIA1TH6rxm1g6jllq5wVZYaiRXdcMkSAa1fWPnQ5lwQ6teJjG3CKttDgPTjJFvrGM18IuJDElelC4npoI7lTWMD-n5X3uPXcMDyci721EUy7WSV2iiy-ir' },
+    { id: 6, name: 'Siopao',    price: 35,   unit: 'pc',    available: true,  category: 'grill', options: ['Asado Sauce','Bola-Bola Sauce'],          img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBDNqscom70WXtwmvaTKw3t1l6pzoscuvxZ3R_mX7gWDZ99kIwn6SaIwtEa52y-_Y8cfakKoSc-cBokcykURCzQVry7jdqBpJ-pvW9iQ6nWHRpZXkgXI1OzgGsLHX7E52hI0ueptu03vAMZ1cGe22sjxZ5NuFQ8jSyzBxzDZWgnjTB23PYBiA_Ob3bnniwfRysv9KTyiBxmqDv_sCppEduJ-bsXnVUxcE4fojjZNrkjM10q8KffPZGzNYBIsiJbx3PwyrY9TL741RZt' },
+  ];
+
+  const allProducts = JSON.parse(localStorage.getItem('2suk_products') || 'null') || DEFAULT_PRODUCTS;
+  let cart = JSON.parse(localStorage.getItem('2suk_cart') || '{}');
+
+  // ─── RENDER MENU ─────────────────────────────────────────
+  function renderMenu() {
+    const main = document.querySelector('main');
+    main.innerHTML = '';
+
+    CATEGORIES.forEach(cat => {
+      const items = allProducts.filter(p => p.category === cat.key);
+      if (items.length === 0) return;
+
+      const section = document.createElement('section');
+      section.className = 'mb-8';
+      section.innerHTML = `
+        <div class="flex items-center gap-2 mb-4">
+          <span class="material-symbols-outlined text-primary">${cat.icon}</span>
+          <h2 class="text-2xl font-bold tracking-tight">${cat.label}</h2>
+        </div>
+        <div class="space-y-4">
+          ${items.map(p => renderProduct(p)).join('')}
+        </div>
+      `;
+      main.appendChild(section);
+    });
+
+    // Products with no category
+    const uncategorized = allProducts.filter(p => !p.category);
+    if (uncategorized.length > 0) {
+      const section = document.createElement('section');
+      section.className = 'mb-8';
+      section.innerHTML = `
+        <div class="flex items-center gap-2 mb-4">
+          <span class="material-symbols-outlined text-primary">category</span>
+          <h2 class="text-2xl font-bold tracking-tight">Others</h2>
+        </div>
+        <div class="space-y-4">
+          ${uncategorized.map(p => renderProduct(p)).join('')}
+        </div>
+      `;
+      main.appendChild(section);
+    }
+  }
+
+  // ─── RENDER SINGLE PRODUCT ───────────────────────────────
+  function renderProduct(p) {
+    const qty = cart[p.id] || 0;
+    const options = p.options || ['None'];
+    const hasOptions = !(options.length === 1 && options[0].toLowerCase() === 'none');
+
+    return `
+      <div class="bg-card-cream dark:bg-slate-800 rounded-xl overflow-hidden shadow-lg border-l-4 ${p.available ? 'border-primary' : 'border-slate-400 opacity-60'} flex">
+        <div class="w-1/3 bg-cover bg-center min-h-[100px]"
+          style="${p.img ? `background-image:url('${p.img}')` : 'background:#e2e8f0'}"></div>
+        <div class="flex-1 p-4 flex flex-col gap-3">
+          <div class="flex justify-between items-start">
+            <div>
+              <h3 class="font-bold text-lg dark:text-slate-100 text-slate-900">${p.name}</h3>
+              ${!p.available ? '<span class="text-xs text-slate-400 font-bold uppercase">Sold Out</span>' : ''}
+            </div>
+            <span class="text-primary font-bold text-lg">₱${p.price}</span>
+          </div>
+          ${p.available ? `
+          <div class="flex gap-2 items-center flex-wrap">
+            ${hasOptions ? `
+              <select class="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-xs py-1 px-2">
+                ${options.map(o => `<option>${o}</option>`).join('')}
+              </select>
+            ` : `<span class="text-xs text-slate-400 italic">No options</span>`}
+            <div class="flex items-center bg-primary rounded-lg text-white ml-auto">
+              <button onclick="updateQty(${p.id}, -1)" class="px-2 py-1">
+                <span class="material-symbols-outlined text-sm">remove</span>
+              </button>
+              <span id="qty-${p.id}" class="px-2 font-bold text-sm">${qty}</span>
+              <button onclick="updateQty(${p.id}, 1)" class="px-2 py-1">
+                <span class="material-symbols-outlined text-sm">add</span>
+              </button>
+            </div>
+          </div>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  // ─── UPDATE QTY ──────────────────────────────────────────
+  function updateQty(id, change) {
+    cart[id] = Math.max(0, (cart[id] || 0) + change);
+    if (cart[id] === 0) delete cart[id];
+    const el = document.getElementById('qty-' + id);
+    if (el) el.textContent = cart[id] || 0;
+    localStorage.setItem('2suk_cart', JSON.stringify(cart));
+    updateCartBtn();
+    const p = allProducts.find(p => p.id == id);
+    if (change > 0 && p) showToast(`${p.name} added to cart 🛒`);
+  }
+
+  // ─── CART BUTTON ─────────────────────────────────────────
+  function updateCartBtn() {
+    const totalItems = Object.values(cart).reduce((a, b) => a + b, 0);
+    const totalPrice = Object.entries(cart).reduce((sum, [id, qty]) => {
+      const p = allProducts.find(p => p.id == id);
+      return sum + ((p?.price || 0) * qty);
+    }, 0);
+    document.getElementById('cartBtnText').textContent = `View Cart (${totalItems} Item${totalItems !== 1 ? 's' : ''})`;
+    document.getElementById('cartTotal').textContent = totalItems > 0 ? `₱${totalPrice.toFixed(2)}` : '';
+  }
+
+  // ─── GO TO CART ──────────────────────────────────────────
+  function goToCart() {
+    const totalItems = Object.values(cart).reduce((a, b) => a + b, 0);
+    if (totalItems === 0) { showToast('Your cart is empty! Add items first 😊'); return; }
+    window.location.href = 'cart.html';
+  }
+
+  // ─── TOAST ───────────────────────────────────────────────
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+  }
+
+  // ─── INIT ────────────────────────────────────────────────
+  renderMenu();
+  updateCartBtn();
+</script>
+</body>
+</html>

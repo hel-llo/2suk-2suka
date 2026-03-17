@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>2suk-2suka | Cart</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "primary": "#da0b0b",
+          "background-light": "#f8f5f5",
+          "background-dark": "#1a0808",
+          "card-cream": "#fff9f0",
+        },
+        fontFamily: { "display": ["Space Grotesk"] },
+        borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+      },
+    },
+  }
+</script>
+<style>
+  body { font-family: 'Space Grotesk', sans-serif; min-height: max(884px, 100dvh); }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+
+  #toast {
+    position: fixed; bottom: 110px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #0f172a; color: white;
+    padding: 10px 20px; border-radius: 99px;
+    font-size: 13px; font-weight: 600;
+    opacity: 0; transition: all 0.3s; z-index: 200;
+    white-space: nowrap;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen pb-40">
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Header -->
+<header class="sticky top-0 z-50 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-primary/20 p-4">
+  <div class="max-w-md mx-auto flex items-center gap-3">
+    <button onclick="window.location.href='index.html'" class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+      <span class="material-symbols-outlined text-primary">arrow_back</span>
+    </button>
+    <div>
+      <h1 class="text-xl font-bold leading-tight">My Cart</h1>
+      <p class="text-xs text-primary font-medium">Review your order</p>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-md mx-auto px-4 pt-6 space-y-4">
+
+  <!-- Order Type Selector -->
+  <div class="bg-card-cream dark:bg-slate-800 rounded-xl p-4 border border-orange-100 dark:border-slate-700">
+    <p class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-3">Order Type</p>
+    <div class="flex gap-2">
+      <button id="btnDelivery" onclick="setOrderType('delivery')"
+        class="flex-1 h-11 rounded-xl flex items-center justify-center gap-2 font-bold text-sm border-2 border-primary bg-primary text-white transition-all">
+        <span class="material-symbols-outlined text-sm">delivery_dining</span> Delivery
+      </button>
+      <button id="btnPickup" onclick="setOrderType('pickup')"
+        class="flex-1 h-11 rounded-xl flex items-center justify-center gap-2 font-bold text-sm border-2 border-slate-200 dark:border-slate-600 text-slate-500 transition-all">
+        <span class="material-symbols-outlined text-sm">storefront</span> Pick-up
+      </button>
+    </div>
+  </div>
+
+  <!-- Cart Items -->
+  <div id="cartItems" class="space-y-3"></div>
+
+  <!-- Empty Cart State -->
+  <div id="emptyCart" class="hidden flex flex-col items-center justify-center py-16 gap-4">
+    <div class="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+      <span class="material-symbols-outlined text-primary text-4xl">shopping_cart</span>
+    </div>
+    <p class="text-lg font-bold text-slate-500">Your cart is empty</p>
+    <button onclick="window.location.href='index.html'"
+      class="px-6 py-3 bg-primary text-white font-bold rounded-xl hover:bg-red-700 transition-colors">
+      Browse Menu
+    </button>
+  </div>
+
+  <!-- Order Summary -->
+  <div id="orderSummary" class="bg-card-cream dark:bg-slate-800 rounded-xl p-4 border border-orange-100 dark:border-slate-700 space-y-2">
+    <p class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-3">Order Summary</p>
+    <div class="flex justify-between text-sm">
+      <span class="text-slate-500">Subtotal</span>
+      <span id="subtotal" class="font-bold">₱0.00</span>
+    </div>
+    <div class="flex justify-between text-sm" id="deliveryFeeRow">
+      <span class="text-slate-500">Delivery Fee</span>
+      <span id="deliveryFee" class="font-bold text-primary">₱30.00</span>
+    </div>
+    <div class="border-t border-orange-100 dark:border-slate-600 pt-2 mt-2 flex justify-between">
+      <span class="font-bold text-base">Total</span>
+      <span id="totalAmount" class="font-bold text-base text-primary">₱0.00</span>
+    </div>
+  </div>
+
+  <!-- Special Instructions -->
+  <div class="bg-card-cream dark:bg-slate-800 rounded-xl p-4 border border-orange-100 dark:border-slate-700">
+    <p class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Special Instructions</p>
+    <textarea id="specialNote" rows="2" placeholder="Any requests? (e.g. extra sauce, no spicy...)"
+      class="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg p-3 text-sm resize-none outline-none focus:border-primary transition-colors"></textarea>
+  </div>
+
+</main>
+
+<!-- Bottom Checkout Button -->
+<div class="fixed bottom-0 left-0 right-0 bg-background-light dark:bg-background-dark border-t border-primary/20 p-4 z-50">
+  <div class="max-w-md mx-auto">
+    <button id="checkoutBtn" onclick="goToCheckout()"
+      class="w-full bg-primary hover:bg-red-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-primary/30 transition-colors">
+      <span class="material-symbols-outlined">payment</span>
+      Proceed to Checkout
+      <span id="checkoutTotal" class="ml-auto text-sm opacity-80"></span>
+    </button>
+  </div>
+</div>
+
+<script>
+  // ─── DATA ────────────────────────────────────────────────
+  const DEFAULT_PRODUCTS = [
+  { id: 1, name: 'Fishball',  price: 1,    unit: 'pc',    img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC2mkvm9fM4L6D1lOcPd9Vf402Isubh0wngPj0EQzClxN3Na6RQD4c9RLBGfdUuS1MW88rIqmJN1QA0ltzV7sLEjnIiBo1ecH0MMPih6qZkEcmfI1kC5pM2JBQ-BYck4iBjnvHpqKVYCaiyusgXYT6dqWTaj8KutWCMZWeIRzo-sMx7V-oHkXfvB7fjp2SLinQON2XoVonEwoyfAIpJC3rYT_w4AJcnWgJAwAD2VvrqdtRTmUpLX3s3P3EBwjpacmzzSPG3vHJyoD2c' },
+  { id: 2, name: 'Kikiam',    price: 2.5,  unit: 'pc',    img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBOH1tgb-NpT88do2nGgkRXvrHsMZNLVcrbgwm3Sc0AXnuACMXl-Sv05e2CpbwBgHg3j7rsJaOBmYxs-EtRzQkhEp9x10jKV-SWxsYlCPTGoCC4YKPbuguant9U2101htlxNhdNqL5YtX4cNVD49UeYLfQ1fMdZq8nZq9JiXvfTpU-rulPJRKhPmst-xJhYJF1p6324XmktOi4F2oJgz7RsOigkVHkTm8stcgPdF9oBuL302j1wjcjeEGHAZXIIjDaejpwMsdnByNOm' },
+  { id: 3, name: 'Squidball', price: 5,    unit: 'pc',    img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuASVCNS4I_lgWyfVFSgDo8-hefJ_Lkld7QDVwpns8gpr-ry5NxDOoQdMYcbvPWHCvCfxOkKBZIykdiAVGqbB0BiJ4VTXZdfgz3QOwoFboBrGfQlREmiJkBwppIKOYXmR6_Gkyv_eaorWXgx6GWIQjqViF7tv-KUa7UpyGLjPtmyFdflLJpF4nW655kcntSku0-sj1nSdwLgM9d52sMv14v2sIL2r9vmQ6bL16Lt7ckxWgwGQBWC0KKU0lNxXKgXJV6iTwb580CaJyrv' },
+  { id: 4, name: 'BBQ',       price: 15,   unit: 'stick', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAeXIpryEsa7xu6RPMxhL8oG53I1fXs4LfkzaubpglFqrf3CTYv4idtoNBptt-zMeo8IJAmhy8n9syBsqo-ZrA8aabC_O920IMwSXVUPErqP72Tl9ipFyneD_UKeGSJLQvFWv5S4uqxstnHlNpE1aaUgccisSe0qq8A1jkyZiGTSHs7YuHdQ-CbFBPN7g45Wui-w6yc4pHgJ3VzjcIxAMEYgLG-9iDS_xbZaqyH5bK1wFYeus8D8zDKcX5v7H8b9onY08nXTNjs0QFs' },
+  { id: 5, name: 'Siomai',    price: 25,   unit: 'pc',    img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuALQlNVfZuZ-n5O6cSu2oJ7TxuN6U6dTWhn_gKAujJ9t94ZchfQUiEiGaBqLcL0NVxqVASHIktosz-uEsVT1reMKpicYQMRJ_SCbdHIAziigY5wwweSm83asJ58d8Di2XiaoJIoAO2URgEqP_iV8I8_jMKIA1TH6rxm1g6jllq5wVZYaiRXdcMkSAa1fWPnQ5lwQ6teJjG3CKttDgPTjJFvrGM18IuJDElelC4npoI7lTWMD-n5X3uPXcMDyci721EUy7WSV2iiy-ir' },
+  { id: 6, name: 'Siopao',    price: 35,   unit: 'pc',    img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBDNqscom70WXtwmvaTKw3t1l6pzoscuvxZ3R_mX7gWDZ99kIwn6SaIwtEa52y-_Y8cfakKoSc-cBokcykURCzQVry7jdqBpJ-pvW9iQ6nWHRpZXkgXI1OzgGsLHX7E52hI0ueptu03vAMZ1cGe22sjxZ5NuFQ8jSyzBxzDZWgnjTB23PYBiA_Ob3bnniwfRysv9KTyiBxmqDv_sCppEduJ-bsXnVUxcE4fojjZNrkjM10q8KffPZGzNYBIsiJbx3PwyrY9TL741RZt' },
+];
+const ALL_PRODUCTS = JSON.parse(localStorage.getItem('2suk_products') || 'null') || DEFAULT_PRODUCTS;
+function findProduct(id) { return ALL_PRODUCTS.find(p => p.id == id); }
+
+const DELIVERY_FEE = parseFloat(localStorage.getItem('2suk_delivery_fee') || '20');
+  let cart = JSON.parse(localStorage.getItem('2suk_cart') || '{}');
+  let orderType = 'delivery';
+
+  // ─── ORDER TYPE ──────────────────────────────────────────
+  function setOrderType(type) {
+    orderType = type;
+    const isDelivery = type === 'delivery';
+
+    document.getElementById('btnDelivery').className = `flex-1 h-11 rounded-xl flex items-center justify-center gap-2 font-bold text-sm border-2 transition-all ${isDelivery ? 'border-primary bg-primary text-white' : 'border-slate-200 dark:border-slate-600 text-slate-500'}`;
+    document.getElementById('btnPickup').className = `flex-1 h-11 rounded-xl flex items-center justify-center gap-2 font-bold text-sm border-2 transition-all ${!isDelivery ? 'border-primary bg-primary text-white' : 'border-slate-200 dark:border-slate-600 text-slate-500'}`;
+
+    document.getElementById('deliveryFeeRow').style.display = isDelivery ? 'flex' : 'none';
+    localStorage.setItem('2suk_ordertype', orderType);
+    updateSummary();
+  }
+
+  // ─── RENDER CART ─────────────────────────────────────────
+  function renderCart() {
+    const container = document.getElementById('cartItems');
+    const emptyState = document.getElementById('emptyCart');
+    const summary = document.getElementById('orderSummary');
+    const checkoutBtn = document.getElementById('checkoutBtn');
+    const keys = Object.keys(cart);
+
+    if (keys.length === 0) {
+      container.innerHTML = '';
+      emptyState.classList.remove('hidden');
+      emptyState.classList.add('flex');
+      summary.style.display = 'none';
+      checkoutBtn.style.display = 'none';
+      return;
+    }
+
+    emptyState.classList.add('hidden');
+    emptyState.classList.remove('flex');
+    summary.style.display = 'block';
+    checkoutBtn.style.display = 'flex';
+
+    container.innerHTML = keys.map(key => {
+      const p = findProduct(key);
+      if (!p) return '';
+      const qty = cart[key];
+      const itemTotal = p.price * qty;
+      return `
+        <div class="bg-card-cream dark:bg-slate-800 rounded-xl p-4 border border-orange-100 dark:border-slate-700 flex items-center gap-3">
+          <div class="w-16 h-16 rounded-lg bg-cover bg-center flex-shrink-0 border-2 border-primary/10"
+            style="background-image: url('${p.img}')"></div>
+          <div class="flex-1 min-w-0">
+            <h3 class="font-bold text-base">${p.name}</h3>
+            <p class="text-primary font-bold text-sm">₱${p.price.toFixed(2)} / ${p.unit}</p>
+            <p class="text-slate-500 text-xs">Item total: ₱${itemTotal.toFixed(2)}</p>
+          </div>
+          <div class="flex items-center bg-primary rounded-lg text-white flex-shrink-0">
+            <button onclick="changeQty('${key}', -1)" class="px-2 py-2">
+              <span class="material-symbols-outlined text-sm">remove</span>
+            </button>
+            <span class="px-3 font-bold text-sm">${qty}</span>
+            <button onclick="changeQty('${key}', 1)" class="px-2 py-2">
+              <span class="material-symbols-outlined text-sm">add</span>
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    updateSummary();
+  }
+
+  // ─── CHANGE QTY ──────────────────────────────────────────
+  function changeQty(key, change) {
+    cart[key] = Math.max(0, (cart[key] || 0) + change);
+    if (cart[key] === 0) {
+      delete cart[key];
+      showToast(`${findProduct(key)?.name} removed from cart`);
+    }
+    localStorage.setItem('2suk_cart', JSON.stringify(cart));
+    renderCart();
+  }
+
+  // ─── UPDATE SUMMARY ──────────────────────────────────────
+  function updateSummary() {
+    const subtotal = Object.entries(cart).reduce((sum, [key, qty]) => {
+      return sum + ((findProduct(key)?.price || 0) * qty);
+    }, 0);
+
+    const fee = orderType === 'delivery' ? DELIVERY_FEE : 0;
+    const total = subtotal + fee;
+
+    document.getElementById('subtotal').textContent = `₱${subtotal.toFixed(2)}`;
+    document.getElementById('deliveryFee').textContent = `₱${fee.toFixed(2)}`;
+    document.getElementById('totalAmount').textContent = `₱${total.toFixed(2)}`;
+    document.getElementById('checkoutTotal').textContent = `₱${total.toFixed(2)}`;
+  }
+
+  // ─── GO TO CHECKOUT ──────────────────────────────────────
+  function goToCheckout() {
+    const note = document.getElementById('specialNote').value;
+    localStorage.setItem('2suk_ordertype', orderType);
+    localStorage.setItem('2suk_note', note);
+    window.location.href = 'checkout.html';
+  }
+
+  // ─── TOAST ───────────────────────────────────────────────
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+  }
+
+  // ─── INIT ────────────────────────────────────────────────
+  const savedType = localStorage.getItem('2suk_ordertype') || 'delivery';
+  setOrderType(savedType);
+  renderCart();
+</script>
+</body>
+</html>

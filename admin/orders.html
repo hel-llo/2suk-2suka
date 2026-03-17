@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Orders - 2suk-2suka Admin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "primary": "#da0b0b",
+          "background-light": "#f8f5f5",
+          "background-dark": "#0a0505",
+          "card-cream": "#fdf8f1",
+        },
+        fontFamily: { "display": ["Space Grotesk", "sans-serif"] },
+        borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+      },
+    },
+  }
+</script>
+<style>
+  body { font-family: 'Space Grotesk', sans-serif; min-height: max(884px, 100dvh); }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+
+  #toast {
+    position: fixed; bottom: 90px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #0f172a; color: white;
+    padding: 10px 20px; border-radius: 99px;
+    font-size: 13px; font-weight: 600;
+    opacity: 0; transition: all 0.3s; z-index: 200;
+    white-space: nowrap;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .modal-backdrop {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7); z-index: 100;
+    align-items: center; justify-content: center; padding: 16px;
+  }
+  .modal-backdrop.open { display: flex; }
+
+  /* Status badge colors */
+  .badge-pending   { background: rgba(234,179,8,0.15);  color: #eab308; border: 1px solid rgba(234,179,8,0.3);  }
+  .badge-confirmed { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+  .badge-preparing { background: rgba(249,115,22,0.15); color: #fb923c; border: 1px solid rgba(249,115,22,0.3); }
+  .badge-ready     { background: rgba(34,197,94,0.15);  color: #4ade80; border: 1px solid rgba(34,197,94,0.3);  }
+  .badge-completed { background: rgba(218,11,11,0.15);  color: #da0b0b; border: 1px solid rgba(218,11,11,0.3);  }
+
+  .filter-btn { padding: 6px 14px; border-radius: 99px; font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; text-transform: uppercase; letter-spacing: 0.05em; }
+  .filter-btn.active { background: #da0b0b; color: white; }
+  .filter-btn.inactive { background: rgba(255,255,255,0.05); color: #94a3b8; border-color: rgba(255,255,255,0.1); }
+</style>
+</head>
+
+<body class="bg-background-dark font-display text-slate-100 min-h-screen pb-24">
+<div id="toast"></div>
+
+<!-- Header -->
+<header class="sticky top-0 z-50 bg-background-dark/90 backdrop-blur-md border-b border-primary/20">
+  <div class="flex items-center p-4 justify-between max-w-2xl mx-auto">
+    <div class="flex items-center gap-3">
+      <div class="bg-primary p-2 rounded-lg">
+        <span class="material-symbols-outlined text-white" style="font-variation-settings:'FILL' 1">receipt_long</span>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold leading-tight">Orders</h1>
+        <p class="text-xs text-primary font-medium">Manage incoming orders</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full border border-primary/20" id="orderCount">0 Orders</span>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-2xl mx-auto p-4 space-y-4">
+
+  <!-- Filter Tabs -->
+  <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+    <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">All</button>
+    <button class="filter-btn inactive" data-filter="pending" onclick="setFilter('pending')">Pending</button>
+    <button class="filter-btn inactive" data-filter="confirmed" onclick="setFilter('confirmed')">Confirmed</button>
+    <button class="filter-btn inactive" data-filter="preparing" onclick="setFilter('preparing')">Preparing</button>
+    <button class="filter-btn inactive" data-filter="ready" onclick="setFilter('ready')">Ready</button>
+    <button class="filter-btn inactive" data-filter="completed" onclick="setFilter('completed')">Completed</button>
+  </div>
+
+  <!-- Orders List -->
+  <div id="ordersList" class="space-y-3"></div>
+
+  <!-- Empty State -->
+  <div id="emptyState" class="hidden flex flex-col items-center justify-center py-20 gap-4">
+    <div class="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+      <span class="material-symbols-outlined text-primary text-4xl">receipt_long</span>
+    </div>
+    <p class="text-lg font-bold text-slate-500">No orders yet</p>
+    <p class="text-sm text-slate-600 text-center">Orders from customers will appear here</p>
+    <button onclick="loadDemoOrders()"
+      class="px-5 py-2 bg-primary/10 text-primary border border-primary/20 rounded-xl text-sm font-bold hover:bg-primary/20 transition-colors">
+      Load Demo Orders
+    </button>
+  </div>
+
+</main>
+
+<!-- Bottom Navigation -->
+<nav class="fixed bottom-0 left-0 right-0 bg-background-dark border-t border-primary/10 px-4 pb-6 pt-3 flex justify-around items-center z-50">
+  <a href="dashboard.html" class="flex flex-col items-center gap-1 text-slate-500">
+    <span class="material-symbols-outlined">dashboard</span>
+    <span class="text-[10px] font-bold uppercase tracking-wider">Inventory</span>
+  </a>
+  <a href="orders.html" class="flex flex-col items-center gap-1 text-primary">
+    <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">receipt_long</span>
+    <span class="text-[10px] font-bold uppercase tracking-wider">Orders</span>
+  </a>
+  <a href="reports.html" class="flex flex-col items-center gap-1 text-slate-500">
+    <span class="material-symbols-outlined">analytics</span>
+    <span class="text-[10px] font-bold uppercase tracking-wider">Reports</span>
+  </a>
+  <a href="settings.html" class="flex flex-col items-center gap-1 text-slate-500">
+    <span class="material-symbols-outlined">settings</span>
+    <span class="text-[10px] font-bold uppercase tracking-wider">Settings</span>
+  </a>
+</nav>
+
+<!-- ORDER DETAIL MODAL -->
+<div class="modal-backdrop" id="detailModal">
+  <div class="bg-background-dark rounded-2xl border border-white/10 w-full max-w-sm max-h-[85vh] overflow-y-auto">
+
+    <!-- Modal Header -->
+    <div class="flex items-center justify-between p-4 border-b border-white/10 sticky top-0 bg-background-dark">
+      <div>
+        <p class="font-bold text-base" id="modalOrderId">ORD-000</p>
+        <p class="text-xs text-slate-500" id="modalTime"></p>
+      </div>
+      <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+        <span class="material-symbols-outlined text-sm">close</span>
+      </button>
+    </div>
+
+    <div class="p-4 space-y-4">
+
+      <!-- Customer Info -->
+      <div class="bg-white/5 rounded-xl p-4 border border-white/10 space-y-2">
+        <p class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Customer</p>
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary text-sm">person</span>
+          <span class="font-bold text-sm" id="modalName"></span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary text-sm">call</span>
+          <span class="text-sm text-slate-300" id="modalPhone"></span>
+        </div>
+        <div class="flex items-center gap-2" id="modalAddressRow">
+          <span class="material-symbols-outlined text-primary text-sm">location_on</span>
+          <span class="text-sm text-slate-300" id="modalAddress"></span>
+        </div>
+      </div>
+
+      <!-- Order Type & Payment -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="bg-white/5 rounded-xl p-3 border border-white/10">
+          <p class="text-xs text-slate-500 mb-1">Type</p>
+          <p class="font-bold text-sm" id="modalType"></p>
+        </div>
+        <div class="bg-white/5 rounded-xl p-3 border border-white/10">
+          <p class="text-xs text-slate-500 mb-1">Payment</p>
+          <p class="font-bold text-sm" id="modalPayment"></p>
+        </div>
+      </div>
+
+      <!-- Items -->
+      <div class="bg-white/5 rounded-xl overflow-hidden border border-white/10">
+        <p class="text-xs font-bold uppercase tracking-wide text-slate-500 p-3 border-b border-white/5">Items Ordered</p>
+        <div id="modalItems" class="divide-y divide-white/5"></div>
+        <div class="flex justify-between items-center p-3 bg-primary/10 border-t border-primary/20">
+          <span class="text-sm font-bold">Total</span>
+          <span class="font-bold text-primary" id="modalTotal"></span>
+        </div>
+      </div>
+
+      <!-- Special Note -->
+      <div id="modalNoteSection" class="hidden bg-white/5 rounded-xl p-3 border border-white/10">
+        <p class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-1">Note</p>
+        <p class="text-sm text-slate-300 italic" id="modalNote"></p>
+      </div>
+
+      <!-- Update Status -->
+      <div>
+        <p class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-3">Update Status</p>
+        <div class="grid grid-cols-2 gap-2" id="statusButtons"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  // ─── AUTH CHECK ──────────────────────────────────────────
+  if (localStorage.getItem('2suk_admin_logged_in') !== 'true') {
+    window.location.href = 'login.html';
+  }
+
+  // ─── PRODUCT DATA ────────────────────────────────────────
+  const PRODUCTS = {
+    fishball:  { name: 'Fishball',  price: 1    },
+    kikiam:    { name: 'Kikiam',    price: 2.5  },
+    squidball: { name: 'Squidball', price: 5    },
+    bbq:       { name: 'BBQ',       price: 15   },
+    siomai:    { name: 'Siomai',    price: 25   },
+    siopao:    { name: 'Siopao',    price: 35   },
+  };
+
+  const DELIVERY_FEE = 30;
+  const STATUS_LABELS = {
+    pending:   { label: 'Pending',   icon: 'hourglass_empty' },
+    confirmed: { label: 'Confirmed', icon: 'thumb_up'        },
+    preparing: { label: 'Preparing', icon: 'soup_kitchen'    },
+    ready:     { label: 'Ready',     icon: 'done_all'        },
+    completed: { label: 'Completed', icon: 'celebration'     },
+  };
+  const STATUS_ORDER = ['pending', 'confirmed', 'preparing', 'ready', 'completed'];
+
+  let allOrders = JSON.parse(localStorage.getItem('2suk_all_orders') || '[]');
+  let currentFilter = 'all';
+  let viewingOrderId = null;
+
+  // ─── LOAD CURRENT ORDER ──────────────────────────────────
+  function loadCurrentOrder() {
+    const current = JSON.parse(localStorage.getItem('2suk_current_order') || 'null');
+    if (current) {
+      const exists = allOrders.find(o => o.id === current.id);
+      if (!exists) {
+        allOrders.unshift(current);
+        saveOrders();
+      }
+    }
+  }
+
+  // ─── DEMO ORDERS ─────────────────────────────────────────
+  function loadDemoOrders() {
+    const demos = [
+      {
+        id: 'ORD-' + (Date.now() - 300000),
+        name: 'Maria Santos', phone: '09171234567',
+        barangay: 'San Jose', landmark: 'Near the Church',
+        orderType: 'delivery', paymentMethod: 'cod',
+        items: { fishball: 5, kikiam: 3, bbq: 1 },
+        status: 'pending', note: 'Extra spicy sauce please',
+        timestamp: new Date(Date.now() - 300000).toISOString(),
+      },
+      {
+        id: 'ORD-' + (Date.now() - 600000),
+        name: 'Juan Dela Cruz', phone: '09209876543',
+        barangay: '', landmark: '',
+        orderType: 'pickup', paymentMethod: 'gcash',
+        items: { siomai: 2, siopao: 1, squidball: 4 },
+        status: 'preparing', note: '',
+        timestamp: new Date(Date.now() - 600000).toISOString(),
+      },
+      {
+        id: 'ORD-' + (Date.now() - 900000),
+        name: 'Ana Reyes', phone: '09551112222',
+        barangay: 'Poblacion', landmark: 'Near the School',
+        orderType: 'delivery', paymentMethod: 'cod',
+        items: { fishball: 10, squidball: 5 },
+        status: 'completed', note: '',
+        timestamp: new Date(Date.now() - 900000).toISOString(),
+      },
+    ];
+    allOrders = [...demos, ...allOrders];
+    saveOrders();
+    render();
+    showToast('Demo orders loaded! 🎉');
+  }
+
+  // ─── SAVE ORDERS ─────────────────────────────────────────
+  function saveOrders() {
+    localStorage.setItem('2suk_all_orders', JSON.stringify(allOrders));
+  }
+
+  // ─── GET ORDER TOTAL ─────────────────────────────────────
+  function getTotal(order) {
+    const subtotal = Object.entries(order.items).reduce((sum, [key, qty]) => {
+      return sum + ((PRODUCTS[key]?.price || 0) * qty);
+    }, 0);
+    return subtotal + (order.orderType === 'delivery' ? DELIVERY_FEE : 0);
+  }
+
+  // ─── FORMAT TIME ─────────────────────────────────────────
+  function formatTime(iso) {
+    const d = new Date(iso);
+    return d.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' }) +
+           ' · ' + d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
+  }
+
+  // ─── SET FILTER ──────────────────────────────────────────
+  function setFilter(filter) {
+    currentFilter = filter;
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      const isActive = btn.dataset.filter === filter;
+      btn.className = `filter-btn ${isActive ? 'active' : 'inactive'}`;
+    });
+    render();
+  }
+
+  // ─── RENDER ORDERS ───────────────────────────────────────
+  function render() {
+    const list = document.getElementById('ordersList');
+    const empty = document.getElementById('emptyState');
+
+    const filtered = currentFilter === 'all'
+      ? allOrders
+      : allOrders.filter(o => o.status === currentFilter);
+
+    document.getElementById('orderCount').textContent =
+      `${allOrders.length} Order${allOrders.length !== 1 ? 's' : ''}`;
+
+    if (filtered.length === 0) {
+      list.innerHTML = '';
+      empty.classList.remove('hidden');
+      empty.classList.add('flex');
+      return;
+    }
+
+    empty.classList.add('hidden');
+    empty.classList.remove('flex');
+
+    list.innerHTML = filtered.map(order => {
+      const total = getTotal(order);
+      const itemCount = Object.values(order.items).reduce((a, b) => a + b, 0);
+      const isDelivery = order.orderType === 'delivery';
+
+      return `
+        <div onclick="openModal('${order.id}')"
+          class="bg-card-cream dark:bg-[#1a0a0a] rounded-xl p-4 border border-orange-100 dark:border-white/5 cursor-pointer hover:border-primary/30 transition-all space-y-3">
+
+          <!-- Top row -->
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <p class="font-bold text-slate-900 dark:text-slate-100 text-sm">${order.id}</p>
+              <p class="text-xs text-slate-500 mt-0.5">${formatTime(order.timestamp)}</p>
+            </div>
+            <span class="badge-${order.status} px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide flex-shrink-0">
+              ${STATUS_LABELS[order.status]?.label || order.status}
+            </span>
+          </div>
+
+          <!-- Customer & type -->
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                <span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings:'FILL' 1">person</span>
+              </div>
+              <div>
+                <p class="font-bold text-sm text-slate-900 dark:text-slate-100">${order.name}</p>
+                <p class="text-xs text-slate-500">${order.phone}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-1 text-xs text-slate-500">
+              <span class="material-symbols-outlined text-sm">${isDelivery ? 'delivery_dining' : 'storefront'}</span>
+              ${isDelivery ? 'Delivery' : 'Pick-up'}
+            </div>
+          </div>
+
+          <!-- Items & total -->
+          <div class="flex items-center justify-between pt-2 border-t border-orange-100 dark:border-white/5">
+            <p class="text-xs text-slate-500">${itemCount} item${itemCount !== 1 ? 's' : ''} · ${order.paymentMethod === 'gcash' ? '📱 GCash' : '💵 COD'}</p>
+            <p class="font-bold text-primary">₱${total.toFixed(2)}</p>
+          </div>
+
+          <!-- Quick status buttons -->
+          <div class="flex gap-2" onclick="event.stopPropagation()">
+            ${getNextStatuses(order.status).map(s => `
+              <button onclick="updateStatus('${order.id}', '${s}')"
+                class="flex-1 h-9 rounded-lg bg-primary text-white text-xs font-bold hover:bg-red-700 transition-colors flex items-center justify-center gap-1">
+                <span class="material-symbols-outlined text-xs">${STATUS_LABELS[s]?.icon}</span>
+                ${STATUS_LABELS[s]?.label}
+              </button>
+            `).join('')}
+            ${order.status !== 'completed' ? `
+              <button onclick="updateStatus('${order.id}', 'completed')"
+                class="w-9 h-9 rounded-lg bg-green-600/20 text-green-400 border border-green-600/30 flex items-center justify-center hover:bg-green-600/30 transition-colors">
+                <span class="material-symbols-outlined text-sm">done_all</span>
+              </button>
+            ` : ''}
+          </div>
+
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ─── GET NEXT STATUS ─────────────────────────────────────
+  function getNextStatuses(current) {
+    const idx = STATUS_ORDER.indexOf(current);
+    const next = STATUS_ORDER[idx + 1];
+    return next && next !== 'completed' ? [next] : [];
+  }
+
+  // ─── UPDATE STATUS ───────────────────────────────────────
+  function updateStatus(orderId, newStatus) {
+    const order = allOrders.find(o => o.id === orderId);
+    if (!order) return;
+    order.status = newStatus;
+    saveOrders();
+
+    // Also update current order if it's the same
+    const current = JSON.parse(localStorage.getItem('2suk_current_order') || 'null');
+    if (current && current.id === orderId) {
+      current.status = newStatus;
+      localStorage.setItem('2suk_current_order', JSON.stringify(current));
+    }
+
+    render();
+    showToast(`Order marked as ${STATUS_LABELS[newStatus]?.label} ✓`);
+
+    // Update modal if open
+    if (viewingOrderId === orderId) openModal(orderId);
+  }
+
+  // ─── OPEN MODAL ──────────────────────────────────────────
+  function openModal(orderId) {
+    const order = allOrders.find(o => o.id === orderId);
+    if (!order) return;
+    viewingOrderId = orderId;
+
+    document.getElementById('modalOrderId').textContent = order.id;
+    document.getElementById('modalTime').textContent = formatTime(order.timestamp);
+    document.getElementById('modalName').textContent = order.name;
+    document.getElementById('modalPhone').textContent = order.phone;
+    document.getElementById('modalType').textContent = order.orderType === 'delivery' ? '🛵 Delivery' : '🏪 Pick-up';
+    document.getElementById('modalPayment').textContent = order.paymentMethod === 'gcash' ? '📱 GCash' : '💵 COD';
+
+    // Address
+    const addrRow = document.getElementById('modalAddressRow');
+    if (order.orderType === 'delivery' && order.barangay) {
+      addrRow.style.display = 'flex';
+      document.getElementById('modalAddress').textContent =
+        [order.barangay, order.landmark].filter(Boolean).join(', ');
+    } else {
+      addrRow.style.display = 'none';
+    }
+
+    // Items
+    document.getElementById('modalItems').innerHTML = Object.entries(order.items).map(([key, qty]) => {
+      const p = PRODUCTS[key];
+      if (!p) return '';
+      return `
+        <div class="flex justify-between items-center px-3 py-2">
+          <p class="text-sm font-bold">${p.name} <span class="text-slate-500 font-normal">x${qty}</span></p>
+          <p class="text-primary font-bold text-sm">₱${(p.price * qty).toFixed(2)}</p>
+        </div>
+      `;
+    }).join('');
+
+    document.getElementById('modalTotal').textContent = `₱${getTotal(order).toFixed(2)}`;
+
+    // Note
+    if (order.note) {
+      document.getElementById('modalNoteSection').classList.remove('hidden');
+      document.getElementById('modalNote').textContent = `"${order.note}"`;
+    } else {
+      document.getElementById('modalNoteSection').classList.add('hidden');
+    }
+
+    // Status buttons
+    document.getElementById('statusButtons').innerHTML = STATUS_ORDER.map(s => {
+      const isCurrent = s === order.status;
+      return `
+        <button onclick="updateStatus('${order.id}', '${s}')"
+          class="h-10 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-all ${isCurrent
+            ? 'bg-primary text-white border-2 border-primary'
+            : 'bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10'
+          }">
+          <span class="material-symbols-outlined text-xs">${STATUS_LABELS[s].icon}</span>
+          ${STATUS_LABELS[s].label}
+        </button>
+      `;
+    }).join('');
+
+    document.getElementById('detailModal').classList.add('open');
+  }
+
+  // ─── CLOSE MODAL ─────────────────────────────────────────
+  function closeModal() {
+    document.getElementById('detailModal').classList.remove('open');
+    viewingOrderId = null;
+  }
+
+  document.getElementById('detailModal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('detailModal')) closeModal();
+  });
+
+  // ─── TOAST ───────────────────────────────────────────────
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // ─── INIT ────────────────────────────────────────────────
+  loadCurrentOrder();
+  render();
+</script>
+</body>
+</html>
