@@ -237,11 +237,11 @@
 <div class="fixed bottom-0 left-0 right-0 bg-background-light dark:bg-background-dark border-t border-primary/20 z-50">
   <div class="max-w-md mx-auto">
     <div class="p-4">
-      <button id="cartBtn" onclick="goToCart()" class="w-full bg-primary hover:bg-red-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-primary/30 transition-colors">
-        <span class="material-symbols-outlined">shopping_cart</span>
-        <span id="cartBtnText">View Cart (0 Items)</span>
-        <span id="cartTotal" class="ml-auto text-sm opacity-80"></span>
-      </button>
+      <button id="cartBtn" onclick="goToCart()" style="width:100%;cursor:pointer;" class="bg-primary hover:bg-red-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-primary/30 transition-colors">
+  <span class="material-symbols-outlined" style="pointer-events:none">shopping_cart</span>
+  <span id="cartBtnText" style="pointer-events:none">View Cart (0 Items)</span>
+  <span id="cartTotal" style="pointer-events:none" class="ml-auto text-sm opacity-80"></span>
+</button>
     </div>
     <div class="flex justify-around items-center pb-6 pt-2">
       <a href="index.html" class="flex flex-col items-center gap-1 text-primary">
@@ -252,10 +252,10 @@
         <span class="material-symbols-outlined">receipt_long</span>
         <span class="text-[10px] font-bold uppercase tracking-wider">Orders</span>
       </a>
-      <a href="#" class="flex flex-col items-center gap-1 text-slate-400">
-        <span class="material-symbols-outlined">person</span>
-        <span class="text-[10px] font-bold uppercase tracking-wider">Profile</span>
-      </a>
+      <a href="profile.html" class="flex flex-col items-center gap-1 text-slate-400">
+  <span class="material-symbols-outlined">person</span>
+  <span class="text-[10px] font-bold uppercase tracking-wider">Profile</span>
+</a>
     </div>
   </div>
 </div>

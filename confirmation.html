@@ -201,7 +201,7 @@
     const keys = Object.keys(order.items);
 
     container.innerHTML = keys.map(key => {
-      const p = PRODUCTS[key];
+      const p = findProduct(key);
       if (!p) return '';
       const qty = order.items[key];
       const total = p.price * qty;
@@ -256,7 +256,7 @@
   // ─── RENDER TOTALS ───────────────────────────────────────
   function renderTotals() {
     const subtotal = Object.entries(order.items).reduce((sum, [key, qty]) => {
-      return sum + ((PRODUCTS[key]?.price || 0) * qty);
+      return sum + ((findProduct(key)?.price || 0) * qty);
     }, 0);
     const fee = order.orderType === 'delivery' ? DELIVERY_FEE : 0;
     const total = subtotal + fee;
@@ -282,12 +282,12 @@ function sendToMessenger() {
     const isDelivery = order.orderType === 'delivery';
     const fee = isDelivery ? 30 : 0;
     const subtotal = Object.entries(order.items).reduce((sum, [key, qty]) => {
-        return sum + ((PRODUCTS[key]?.price || 0) * qty);
+        return sum + ((findProduct(key)?.price || 0) * qty);
     }, 0);
     const total = subtotal + fee;
 
     const itemLines = Object.entries(order.items).map(([key, qty]) => {
-        const p = PRODUCTS[key];
+        const p = findProduct(key);
         return `- ${p.name} x${qty} = ₱${(p.price * qty).toFixed(2)}`;
     }).join('\n');
 
@@ -310,7 +310,13 @@ Payment: ${order.paymentMethod === 'gcash' ? 'GCash' : 'Cash on Delivery'}
 ${order.note ? `Note: ${order.note}` : ''}`;
 
     const encoded = encodeURIComponent(msg);
-    window.open(`https://m.me/100095455952861?text=${encoded}`, '_blank');
+    const link = document.createElement('a');
+link.href = `https://m.me/100095455952861?text=${encoded}`;
+link.target = '_blank';
+link.rel = 'noopener';
+document.body.appendChild(link);
+link.click();
+document.body.removeChild(link);
 }
 
   // ─── INIT ────────────────────────────────────────────────

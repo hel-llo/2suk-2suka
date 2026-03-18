@@ -246,7 +246,7 @@
   function renderItems() {
     const container = document.getElementById('orderItems');
     container.innerHTML = Object.entries(order.items).map(([key, qty]) => {
-      const p = PRODUCTS[key];
+      const p = findProduct(key);
       if (!p) return '';
       return `
         <div class="flex justify-between items-center px-4 py-3">
@@ -263,7 +263,7 @@
   // ─── RENDER TOTALS ───────────────────────────────────────
   function renderTotals() {
     const subtotal = Object.entries(order.items).reduce((sum, [key, qty]) => {
-      return sum + ((PRODUCTS[key]?.price || 0) * qty);
+      return sum + ((findProduct(key)?.price || 0) * qty);
     }, 0);
     const fee = order.orderType === 'delivery' ? DELIVERY_FEE : 0;
     document.getElementById('totalAmount').textContent = `₱${(subtotal + fee).toFixed(2)}`;

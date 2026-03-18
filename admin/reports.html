@@ -210,18 +210,20 @@
     window.location.href = 'login.html';
   }
 
-  const PRODUCTS = {
-    fishball:  { name: 'Fishball',  price: 1    },
-    kikiam:    { name: 'Kikiam',    price: 2.5  },
-    squidball: { name: 'Squidball', price: 5    },
-    bbq:       { name: 'BBQ',       price: 15   },
-    siomai:    { name: 'Siomai',    price: 25   },
-    siopao:    { name: 'Siopao',    price: 35   },
-  };
+  const DEFAULT_PRODUCTS = [
+  { id: 1, name: 'Fishball',  price: 1    },
+  { id: 2, name: 'Kikiam',    price: 2.5  },
+  { id: 3, name: 'Squidball', price: 5    },
+  { id: 4, name: 'BBQ',       price: 15   },
+  { id: 5, name: 'Siomai',    price: 25   },
+  { id: 6, name: 'Siopao',    price: 35   },
+];
+const PRODUCTS_LIST = JSON.parse(localStorage.getItem('2suk_products') || 'null') || DEFAULT_PRODUCTS;
+function findProduct(id) { return PRODUCTS_LIST.find(p => p.id == id); }
 
-  const DELIVERY_FEE = parseFloat(localStorage.getItem('2suk_delivery_fee') || '20');
-  let currentPeriod = 'today';
-  let allOrders = JSON.parse(localStorage.getItem('2suk_all_orders') || '[]');
+const DELIVERY_FEE = parseFloat(localStorage.getItem('2suk_delivery_fee') || '20');
+let currentPeriod = 'today';
+let allOrders = JSON.parse(localStorage.getItem('2suk_all_orders') || '[]');
 
   // Also load current order if not in all orders
   const current = JSON.parse(localStorage.getItem('2suk_current_order') || 'null');
@@ -248,7 +250,7 @@
   // ─── GET TOTAL ───────────────────────────────────────────
   function getTotal(order) {
     const subtotal = Object.entries(order.items).reduce((sum, [key, qty]) => {
-      return sum + ((PRODUCTS[key]?.price || 0) * qty);
+      return sum + ((findProduct(key)?.price || 0) * qty);
     }, 0);
     return subtotal + (order.orderType === 'delivery' ? DELIVERY_FEE : 0);
   }
@@ -325,7 +327,7 @@
     document.getElementById('bestSellers').innerHTML = sorted.length === 0
       ? `<p class="text-sm text-slate-600 text-center py-2">No sales data yet</p>`
       : sorted.map(([key, qty], i) => {
-          const p = PRODUCTS[key];
+          const p = findProduct(key);
           if (!p) return '';
           const pct = Math.round((qty / maxQty) * 100);
           return `

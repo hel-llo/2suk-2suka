@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Profile - 2suk-2suka</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<style>
+  body { font-family: 'Space Grotesk', sans-serif; min-height: 100dvh; }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+</style>
+</head>
+<body class="bg-[#1a0808] text-slate-100 pb-24">
+
+<header class="sticky top-0 z-50 bg-[#1a0808]/90 backdrop-blur-md border-b border-red-900/20 p-4">
+  <div class="max-w-md mx-auto">
+    <h1 class="text-xl font-bold">My Profile</h1>
+  </div>
+</header>
+
+<main class="max-w-md mx-auto px-4 pt-8 space-y-4">
+
+  <!-- Avatar -->
+  <div class="flex flex-col items-center py-8 gap-3">
+    <div class="w-24 h-24 rounded-full bg-red-900/30 border-2 border-primary flex items-center justify-center">
+      <span class="material-symbols-outlined text-primary text-5xl" style="font-variation-settings:'FILL' 1">person</span>
+    </div>
+    <p class="font-bold text-xl">Guest Customer</p>
+    <p class="text-slate-500 text-sm">No account required to order!</p>
+  </div>
+
+  <!-- Last Order -->
+  <div class="bg-white/5 rounded-xl p-4 border border-white/10" id="lastOrderCard">
+    <p class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-3">Last Order</p>
+    <div id="lastOrderContent"></div>
+  </div>
+
+  <!-- Quick Links -->
+  <div class="bg-white/5 rounded-xl overflow-hidden border border-white/10">
+    <a href="tracking.html" class="flex items-center gap-3 p-4 border-b border-white/5 hover:bg-white/5 transition-colors">
+      <span class="material-symbols-outlined text-primary">location_on</span>
+      <span class="font-bold text-sm">Track My Order</span>
+      <span class="material-symbols-outlined text-slate-500 ml-auto text-sm">chevron_right</span>
+    </a>
+    <a href="index.html" class="flex items-center gap-3 p-4 hover:bg-white/5 transition-colors">
+      <span class="material-symbols-outlined text-primary">restaurant_menu</span>
+      <span class="font-bold text-sm">Browse Menu</span>
+      <span class="material-symbols-outlined text-slate-500 ml-auto text-sm">chevron_right</span>
+    </a>
+  </div>
+
+  <!-- App Info -->
+  <div class="bg-white/5 rounded-xl p-4 border border-white/10 text-center space-y-1">
+    <p class="font-bold text-primary">2suk-2suka</p>
+    <p class="text-xs text-slate-500">Street Food Ordering App</p>
+    <p class="text-xs text-slate-600">v1.0</p>
+  </div>
+
+</main>
+
+<!-- Bottom Nav -->
+<nav class="fixed bottom-0 left-0 right-0 bg-[#1a0808] border-t border-red-900/20 px-4 pb-6 pt-3 flex justify-around items-center z-50">
+  <a href="index.html" class="flex flex-col items-center gap-1 text-slate-400">
+    <span class="material-symbols-outlined">restaurant_menu</span>
+    <span class="text-[10px] font-bold uppercase tracking-wider">Menu</span>
+  </a>
+  <a href="tracking.html" class="flex flex-col items-center gap-1 text-slate-400">
+    <span class="material-symbols-outlined">receipt_long</span>
+    <span class="text-[10px] font-bold uppercase tracking-wider">Orders</span>
+  </a>
+  <a href="profile.html" class="flex flex-col items-center gap-1 text-primary">
+    <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">person</span>
+    <span class="text-[10px] font-bold uppercase tracking-wider">Profile</span>
+  </a>
+</nav>
+
+<script>
+  const order = JSON.parse(localStorage.getItem('2suk_current_order') || 'null');
+  const content = document.getElementById('lastOrderContent');
+
+  if (order) {
+    content.innerHTML = `
+      <p class="font-bold text-sm text-primary">${order.id}</p>
+      <p class="text-xs text-slate-400 mt-1">${order.name} · ${order.orderType === 'delivery' ? '🛵 Delivery' : '🏪 Pick-up'}</p>
+      <p class="text-xs text-slate-400">${order.paymentMethod === 'gcash' ? '📱 GCash' : '💵 COD'}</p>
+      <a href="tracking.html" class="mt-3 flex items-center gap-1 text-primary text-xs font-bold">
+        Track this order <span class="material-symbols-outlined text-sm">arrow_forward</span>
+      </a>
+    `;
+  } else {
+    content.innerHTML = `<p class="text-sm text-slate-500">No orders yet — start ordering! 🍢</p>`;
+  }
+</script>
+</body>
+</html>

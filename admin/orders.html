@@ -209,28 +209,23 @@
   }
 
   // ─── PRODUCT DATA ────────────────────────────────────────
-  const PRODUCTS = {
-    fishball:  { name: 'Fishball',  price: 1    },
-    kikiam:    { name: 'Kikiam',    price: 2.5  },
-    squidball: { name: 'Squidball', price: 5    },
-    bbq:       { name: 'BBQ',       price: 15   },
-    siomai:    { name: 'Siomai',    price: 25   },
-    siopao:    { name: 'Siopao',    price: 35   },
-  };
 
-  const DELIVERY_FEE = 30;
-  const STATUS_LABELS = {
-    pending:   { label: 'Pending',   icon: 'hourglass_empty' },
-    confirmed: { label: 'Confirmed', icon: 'thumb_up'        },
-    preparing: { label: 'Preparing', icon: 'soup_kitchen'    },
-    ready:     { label: 'Ready',     icon: 'done_all'        },
-    completed: { label: 'Completed', icon: 'celebration'     },
-  };
-  const STATUS_ORDER = ['pending', 'confirmed', 'preparing', 'ready', 'completed'];
+  const DEFAULT_PRODUCTS = [
+  { id: 1, name: 'Fishball',  price: 1    },
+  { id: 2, name: 'Kikiam',    price: 2.5  },
+  { id: 3, name: 'Squidball', price: 5    },
+  { id: 4, name: 'BBQ',       price: 15   },
+  { id: 5, name: 'Siomai',    price: 25   },
+  { id: 6, name: 'Siopao',    price: 35   },
+];
+const PRODUCTS_LIST = JSON.parse(localStorage.getItem('2suk_products') || 'null') || DEFAULT_PRODUCTS;
+function findProduct(id) { return PRODUCTS_LIST.find(p => p.id == id); }
+const DELIVERY_FEE = parseFloat(localStorage.getItem('2suk_delivery_fee') || '20');
+const STATUS_ORDER = ['pending', 'confirmed', 'preparing', 'ready', 'completed'];
 
-  let allOrders = JSON.parse(localStorage.getItem('2suk_all_orders') || '[]');
-  let currentFilter = 'all';
-  let viewingOrderId = null;
+let allOrders = JSON.parse(localStorage.getItem('2suk_all_orders') || '[]');
+let currentFilter = 'all';
+let viewingOrderId = null;
 
   // ─── LOAD CURRENT ORDER ──────────────────────────────────
   function loadCurrentOrder() {
@@ -289,7 +284,7 @@
   // ─── GET ORDER TOTAL ─────────────────────────────────────
   function getTotal(order) {
     const subtotal = Object.entries(order.items).reduce((sum, [key, qty]) => {
-      return sum + ((PRODUCTS[key]?.price || 0) * qty);
+      return sum + ((findProduct(key)?.price || 0) * qty);
     }, 0);
     return subtotal + (order.orderType === 'delivery' ? DELIVERY_FEE : 0);
   }
@@ -451,7 +446,7 @@
 
     // Items
     document.getElementById('modalItems').innerHTML = Object.entries(order.items).map(([key, qty]) => {
-      const p = PRODUCTS[key];
+      const p = findProduct(key);
       if (!p) return '';
       return `
         <div class="flex justify-between items-center px-3 py-2">
