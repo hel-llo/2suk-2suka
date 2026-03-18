@@ -126,11 +126,11 @@
       </div>
       <div id="feeRow" class="flex justify-between text-sm">
         <span class="text-slate-400">Delivery Fee</span>
-        <span class="font-bold text-primary">₱30.00</span>
+        <span id="delivery-fee" class="font-bold text-primary">₱30.00</span>
       </div>
       <div class="border-t border-white/10 pt-2 flex justify-between">
         <span class="font-bold">Total</span>
-        <span id="totalAmount" class="font-bold text-primary text-lg">₱0.00</span>
+        <span id="totalAmount" id="total" class="font-bold text-primary text-lg">₱0.00</span>
       </div>
     </div>
 
@@ -173,125 +173,145 @@
 </div>
 
 <script>
-  // ─── PRODUCT DATA ────────────────────────────────────────
-  const PRODUCTS = {
-    fishball:  { name: 'Fishball',  price: 1    },
-    kikiam:    { name: 'Kikiam',    price: 2.5  },
-    squidball: { name: 'Squidball', price: 5    },
-    bbq:       { name: 'BBQ',       price: 15   },
-    siomai:    { name: 'Siomai',    price: 25   },
-    siopao:    { name: 'Siopao',    price: 35   },
-  };
+ // ─── PRODUCTS ────────────────────────────────────────
+const DEFAULT_PRODUCTS = [
+  { id: 1, name: 'Fishball',  price: 1    },
+  { id: 2, name: 'Kikiam',    price: 2.5  },
+  { id: 3, name: 'Squidball', price: 5    },
+  { id: 4, name: 'BBQ',       price: 15   },
+  { id: 5, name: 'Siomai',    price: 25   },
+  { id: 6, name: 'Siopao',    price: 35   },
+];
+const PRODUCTS_LIST = JSON.parse(localStorage.getItem('2suk_products') || 'null') || DEFAULT_PRODUCTS;
+function findProduct(id) { return PRODUCTS_LIST.find(p => String(p.id) === String(id)); }
+const DELIVERY_FEE = parseFloat(localStorage.getItem('2suk_delivery_fee') || '20');
 
-  const DELIVERY_FEE = parseFloat(localStorage.getItem('2suk_delivery_fee') || '20');
+// ─── LOAD ORDER ──────────────────────────────────────
+const order = JSON.parse(localStorage.getItem('2suk_current_order') || 'null');
+if (!order) { window.location.href = 'index.html'; }
 
-  // ─── LOAD ORDER ──────────────────────────────────────────
-  const order = JSON.parse(localStorage.getItem('2suk_current_order') || 'null');
+// ─── INIT ────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', function() {
 
-  if (!order) {
-    window.location.href = 'index.html';
-  }
+  // Order ID
+  const orderIdEl = document.getElementById('orderId');
+  if (orderIdEl) orderIdEl.textContent = order.id || 'N/A';
 
-  // ─── ORDER ID ────────────────────────────────────────────
-  document.getElementById('orderId').textContent = order.id;
-
-  // ─── RENDER ITEMS ────────────────────────────────────────
-  function renderItems() {
-    const container = document.getElementById('orderItems');
-    const keys = Object.keys(order.items);
-
-    container.innerHTML = keys.map(key => {
-      const p = findProduct(key);
-      if (!p) return '';
-      const qty = order.items[key];
-      const total = p.price * qty;
-      return `
-        <div class="flex justify-between items-center px-4 py-3">
-          <div>
-            <p class="font-bold text-sm text-slate-100">${p.name}</p>
-            <p class="text-xs text-slate-500">x${qty}</p>
-          </div>
-          <p class="font-bold text-primary text-sm">₱${total.toFixed(2)}</p>
-        </div>
-      `;
-    }).join('');
-  }
-
-  // ─── RENDER DETAILS ──────────────────────────────────────
-  function renderDetails() {
-    const isDelivery = order.orderType === 'delivery';
-
-    // Order type
-    document.getElementById('orderType').innerHTML = isDelivery
-      ? `<span class="material-symbols-outlined text-sm text-primary">delivery_dining</span> Delivery`
-      : `<span class="material-symbols-outlined text-sm text-primary">storefront</span> Pick-up`;
-
-    // Payment
-    const payEl = document.getElementById('paymentMethod');
-    payEl.textContent = order.paymentMethod === 'cod' ? '💵 Cash on Delivery' : '📱 GCash';
-
-    // Address
-    if (isDelivery && order.barangay) {
-      const addr = [order.barangay, order.landmark].filter(Boolean).join(', ');
-      document.getElementById('address').textContent = addr;
+  // ── Items Ordered ──
+  const itemsContainer = document.getElementById('orderItems');
+  if (itemsContainer) {
+    const keys = Object.keys(order.items || {});
+    if (keys.length === 0) {
+      itemsContainer.innerHTML = '<p class="text-slate-500 text-sm p-4">No items found</p>';
     } else {
-      document.getElementById('addressRow').style.display = 'none';
-    }
-
-    // Name & phone
-    document.getElementById('customerName').textContent = order.name;
-    document.getElementById('customerPhone').textContent = order.phone;
-
-    // Delivery fee row
-    if (!isDelivery) {
-      document.getElementById('feeRow').style.display = 'none';
-    }
-
-    // ETA
-    document.getElementById('etaText').textContent = isDelivery
-      ? 'Estimated: 20-30 minutes'
-      : 'Ready for pick-up in 15-20 minutes';
-  }
-
-  // ─── RENDER TOTALS ───────────────────────────────────────
-  function renderTotals() {
-    const subtotal = Object.entries(order.items).reduce((sum, [key, qty]) => {
-      return sum + ((findProduct(key)?.price || 0) * qty);
-    }, 0);
-    const fee = order.orderType === 'delivery' ? DELIVERY_FEE : 0;
-    const total = subtotal + fee;
-
-    document.getElementById('subtotal').textContent = `₱${subtotal.toFixed(2)}`;
-    document.getElementById('totalAmount').textContent = `₱${total.toFixed(2)}`;
-  }
-
-  // ─── SPECIAL NOTE ────────────────────────────────────────
-  function renderNote() {
-    if (order.note) {
-      document.getElementById('noteSection').classList.remove('hidden');
-      document.getElementById('noteText').textContent = `"${order.note}"`;
+      itemsContainer.innerHTML = keys.map(key => {
+        const p = findProduct(key);
+        if (!p) return '';
+        const qty = order.items[key];
+        const lineTotal = p.price * qty;
+        return `
+          <div class="flex justify-between items-center px-4 py-3">
+            <div>
+              <p class="font-bold text-sm text-slate-100">${p.name}</p>
+              <p class="text-xs text-slate-500">x${qty}</p>
+            </div>
+            <p class="font-bold text-primary text-sm">₱${lineTotal.toFixed(2)}</p>
+          </div>
+        `;
+      }).join('');
     }
   }
 
-  // ─── TRACK ORDER ─────────────────────────────────────────
-  function trackOrder() {
-    window.location.href = 'tracking.html';
+  // ── Order Details ──
+  const isDelivery = order.orderType === 'delivery';
+
+  const orderTypeEl = document.getElementById('orderType');
+  if (orderTypeEl) orderTypeEl.innerHTML = isDelivery
+    ? `<span class="material-symbols-outlined text-sm text-primary">delivery_dining</span> Delivery`
+    : `<span class="material-symbols-outlined text-sm text-primary">storefront</span> Pick-up`;
+
+  const paymentEl = document.getElementById('paymentMethod');
+  if (paymentEl) paymentEl.textContent =
+    order.paymentMethod === 'gcash' ? '📱 GCash' : '💵 Cash on Delivery';
+
+  const addressRowEl = document.getElementById('addressRow');
+  const addressEl = document.getElementById('address');
+  if (isDelivery && order.barangay) {
+    const addr = [order.barangay, order.landmark].filter(Boolean).join(', ');
+    if (addressEl) addressEl.textContent = addr;
+  } else {
+    if (addressRowEl) addressRowEl.style.display = 'none';
+  }
+
+  const nameEl = document.getElementById('customerName');
+  if (nameEl) nameEl.textContent = order.name || 'N/A';
+
+  const phoneEl = document.getElementById('customerPhone');
+  if (phoneEl) phoneEl.textContent = order.phone || 'N/A';
+
+  // ── Bill Summary ──
+  const subtotal = Object.entries(order.items || {}).reduce((sum, [key, qty]) => {
+    const p = findProduct(key);
+    return sum + ((p?.price || 0) * qty);
+  }, 0);
+  const fee = isDelivery ? DELIVERY_FEE : 0;
+  const total = subtotal + fee;
+
+  const subtotalEl = document.getElementById('subtotal');
+  if (subtotalEl) subtotalEl.textContent = `₱${subtotal.toFixed(2)}`;
+
+  // Fix delivery fee display
+  const feeRow = document.getElementById('feeRow');
+  if (feeRow) {
+    const feeSpan = feeRow.querySelector('span:last-child');
+    if (feeSpan) feeSpan.textContent = `₱${fee.toFixed(2)}`;
+    if (!isDelivery) feeRow.style.display = 'none';
+  }
+
+  // Fix total — update BOTH ids just in case
+  const totalEl = document.getElementById('totalAmount');
+  if (totalEl) totalEl.textContent = `₱${total.toFixed(2)}`;
+  const totalEl2 = document.getElementById('total');
+  if (totalEl2) totalEl2.textContent = `₱${total.toFixed(2)}`;
+
+  // ── ETA ──
+  const etaEl = document.getElementById('etaText');
+  if (etaEl) etaEl.textContent = isDelivery
+    ? 'Estimated: 20-30 minutes'
+    : 'Ready for pick-up in 15-20 minutes';
+
+  // ── Special Note ──
+  if (order.note) {
+    const noteSection = document.getElementById('noteSection');
+    const noteText = document.getElementById('noteText');
+    if (noteSection) noteSection.classList.remove('hidden');
+    if (noteText) noteText.textContent = `"${order.note}"`;
+  }
+});
+
+// ─── TRACK ORDER ─────────────────────────────────────
+function trackOrder() {
+  window.location.href = 'tracking.html';
 }
 
+// ─── SEND TO MESSENGER ───────────────────────────────
 function sendToMessenger() {
-    const isDelivery = order.orderType === 'delivery';
-    const fee = isDelivery ? 30 : 0;
-    const subtotal = Object.entries(order.items).reduce((sum, [key, qty]) => {
-        return sum + ((findProduct(key)?.price || 0) * qty);
-    }, 0);
-    const total = subtotal + fee;
+  const isDelivery = order.orderType === 'delivery';
+  const fee = isDelivery ? DELIVERY_FEE : 0;
 
-    const itemLines = Object.entries(order.items).map(([key, qty]) => {
-        const p = findProduct(key);
-        return `- ${p.name} x${qty} = ₱${(p.price * qty).toFixed(2)}`;
-    }).join('\n');
+  const subtotal = Object.entries(order.items || {}).reduce((sum, [key, qty]) => {
+    const p = findProduct(key);
+    return sum + ((p?.price || 0) * qty);
+  }, 0);
+  const total = subtotal + fee;
 
-    const msg = `🛒 NEW ORDER - 2suk-2suka
+  const itemLines = Object.entries(order.items || {}).map(([key, qty]) => {
+    const p = findProduct(key);
+    if (!p) return '';
+    return `- ${p.name} x${qty} = ₱${(p.price * qty).toFixed(2)}`;
+  }).filter(Boolean).join('\n');
+
+  const msg = `🛒 NEW ORDER - 2suk-2suka
 
 Order ID: ${order.id}
 Name: ${order.name}
@@ -309,21 +329,9 @@ Total: ₱${total.toFixed(2)}
 Payment: ${order.paymentMethod === 'gcash' ? 'GCash' : 'Cash on Delivery'}
 ${order.note ? `Note: ${order.note}` : ''}`;
 
-    const encoded = encodeURIComponent(msg);
-    const link = document.createElement('a');
-link.href = `https://m.me/100095455952861?text=${encoded}`;
-link.target = '_blank';
-link.rel = 'noopener';
-document.body.appendChild(link);
-link.click();
-document.body.removeChild(link);
+  const encoded = encodeURIComponent(msg);
+  window.location.href = `https://m.me/100095455952861?text=${encoded}`;
 }
-
-  // ─── INIT ────────────────────────────────────────────────
-  renderItems();
-  renderDetails();
-  renderTotals();
-  renderNote();
 </script>
 </body>
 </html>

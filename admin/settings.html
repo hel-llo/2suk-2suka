@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Settings — Admin</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f3f4f6;
+      color: #111827;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #111827;
+      color: #fff;
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    header h1 {
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    header a {
+      color: #d1d5db;
+      text-decoration: none;
+      font-size: .9rem;
+    }
+
+    header a:hover { color: #fff; }
+
+    .container {
+      max-width: 600px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 1.5rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+      margin-bottom: 1.5rem;
+    }
+
+    .card h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: #374151;
+      border-bottom: 1px solid #e5e7eb;
+      padding-bottom: .5rem;
+    }
+
+    label {
+      display: block;
+      font-size: .85rem;
+      font-weight: 500;
+      color: #6b7280;
+      margin-bottom: .3rem;
+    }
+
+    input {
+      width: 100%;
+      padding: .6rem .8rem;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: .95rem;
+      margin-bottom: 1rem;
+      outline: none;
+      transition: border-color .2s;
+    }
+
+    input:focus { border-color: #6366f1; }
+
+    button {
+      background: #111827;
+      color: #fff;
+      border: none;
+      padding: .65rem 1.4rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: .95rem;
+      font-weight: 500;
+      transition: background .2s;
+    }
+
+    button:hover { background: #374151; }
+
+    .success-msg {
+      display: none;
+      color: #16a34a;
+      font-size: .9rem;
+      margin-top: .5rem;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      text-decoration: none;
+      color: #6366f1;
+      font-size: .9rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .back-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>⚙️ Admin Settings</h1>
+    <a href="dashboard.html">← Back to Dashboard</a>
+  </header>
+
+  <div class="container">
+
+    <a class="back-link" href="dashboard.html">← Back to Dashboard</a>
+
+    <!-- Delivery Fee -->
+    <div class="card">
+      <h2>🚚 Delivery Fee</h2>
+      <label for="delivery-fee-input">Delivery Fee (₱)</label>
+      <input type="number" id="delivery-fee-input" placeholder="e.g. 20" min="0" />
+      <button onclick="saveDeliveryFee()">Save Delivery Fee</button>
+      <p class="success-msg" id="fee-success">✅ Delivery fee saved!</p>
+    </div>
+
+    <!-- Store Info -->
+    <div class="card">
+      <h2>🏪 Store Information</h2>
+      <label for="store-name-input">Store Name</label>
+      <input type="text" id="store-name-input" placeholder="e.g. 2Suk Food Store" />
+      <label for="store-phone-input">Contact Number</label>
+      <input type="text" id="store-phone-input" placeholder="e.g. 09XX-XXX-XXXX" />
+      <button onclick="saveStoreInfo()">Save Store Info</button>
+      <p class="success-msg" id="store-success">✅ Store info saved!</p>
+    </div>
+
+    <!-- Danger Zone -->
+    <div class="card">
+      <h2>⚠️ Danger Zone</h2>
+      <label>Clear all orders from localStorage</label>
+      <button onclick="clearOrders()"
+              style="background:#ef4444;">
+        Clear All Orders
+      </button>
+    </div>
+
+  </div>
+
+  <script>
+    // Load saved values on page load
+    document.addEventListener('DOMContentLoaded', function () {
+      const fee = localStorage.getItem('2suk_delivery_fee');
+      if (fee) document.getElementById('delivery-fee-input').value = fee;
+
+      const storeInfo = JSON.parse(localStorage.getItem('2suk_store_info') || '{}');
+      if (storeInfo.name)  document.getElementById('store-name-input').value  = storeInfo.name;
+      if (storeInfo.phone) document.getElementById('store-phone-input').value = storeInfo.phone;
+    });
+
+    function saveDeliveryFee() {
+      const val = document.getElementById('delivery-fee-input').value.trim();
+      if (val === '' || isNaN(val)) {
+        alert('Please enter a valid number for the delivery fee.');
+        return;
+      }
+      localStorage.setItem('2suk_delivery_fee', val);
+      showSuccess('fee-success');
+    }
+
+    function saveStoreInfo() {
+      const name  = document.getElementById('store-name-input').value.trim();
+      const phone = document.getElementById('store-phone-input').value.trim();
+      localStorage.setItem('2suk_store_info', JSON.stringify({ name, phone }));
+      showSuccess('store-success');
+    }
+
+    function clearOrders() {
+      if (confirm('Are you sure you want to delete ALL orders? This cannot be undone.')) {
+        localStorage.removeItem('2suk_all_orders');
+        localStorage.removeItem('2suk_current_order');
+        alert('✅ All orders cleared.');
+      }
+    }
+
+    function showSuccess(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.style.display = 'block';
+      setTimeout(() => { el.style.display = 'none'; }, 3000);
+    }
+  </script>
+
+</body>
+</html>

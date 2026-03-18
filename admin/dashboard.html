@@ -297,7 +297,7 @@
   { id: 6, name: 'Siopao',    price: 25.00, unit: 'pc',    available: true,  img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBqEanRY4leOHx7PvOIxxrxkaRdMEgIU_Oph4JHV0ERGkPMzj9invQKSiUP_vuijx3FGbtDbf45vdnxZhVYtYi3J5DX96MKv7sichSJB9CdifkeFxeaP-n3PDU6xRiM0RmD8ypvdAJQ23voH6SFfo6q-B8wTOhrqhdyQg-dhOMdesl27W8_458o35qCq9AQbhqEeJAMEMyQBtFCa6qO8iot-W5alOpSCmn-90C1p1DQp-Qb8DU-BK06nCKmyHqacDcA7w82m4kbWZLz' },
 ];
 
-  let nextId = 7;
+  let nextId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
   let editingId = null;
   let deletingId = null;
 

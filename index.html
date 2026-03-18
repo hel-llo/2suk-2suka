@@ -279,8 +279,20 @@
     { id: 6, name: 'Siopao',    price: 35,   unit: 'pc',    available: true,  category: 'grill', options: ['Asado Sauce','Bola-Bola Sauce'],          img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBDNqscom70WXtwmvaTKw3t1l6pzoscuvxZ3R_mX7gWDZ99kIwn6SaIwtEa52y-_Y8cfakKoSc-cBokcykURCzQVry7jdqBpJ-pvW9iQ6nWHRpZXkgXI1OzgGsLHX7E52hI0ueptu03vAMZ1cGe22sjxZ5NuFQ8jSyzBxzDZWgnjTB23PYBiA_Ob3bnniwfRysv9KTyiBxmqDv_sCppEduJ-bsXnVUxcE4fojjZNrkjM10q8KffPZGzNYBIsiJbx3PwyrY9TL741RZt' },
   ];
 
-  const allProducts = JSON.parse(localStorage.getItem('2suk_products') || 'null') || DEFAULT_PRODUCTS;
+  // --- SYNC LOGIC START ---
+  // 1. Check if there are any products saved in the Admin storage
+  let allProducts = JSON.parse(localStorage.getItem('2suk_products') || 'null');
+  
+  // 2. If the storage is empty (first time loading), use the code defaults
+  if (!allProducts) {
+    allProducts = DEFAULT_PRODUCTS;
+    // 3. IMPORTANT: Save them to storage so the Admin Panel can see them
+    localStorage.setItem('2suk_products', JSON.stringify(DEFAULT_PRODUCTS));
+  }
+  
+  // 4. Load the cart
   let cart = JSON.parse(localStorage.getItem('2suk_cart') || '{}');
+  // --- SYNC LOGIC END ---
 
   // ─── RENDER MENU ─────────────────────────────────────────
   function renderMenu() {
@@ -363,14 +375,28 @@
     `;
   }
 
-  // ─── UPDATE QTY ──────────────────────────────────────────
+  // ─── UPDATE QTY (SYNCED VERSION) ──────────────────────────
   function updateQty(id, change) {
     cart[id] = Math.max(0, (cart[id] || 0) + change);
     if (cart[id] === 0) delete cart[id];
+    
     const el = document.getElementById('qty-' + id);
     if (el) el.textContent = cart[id] || 0;
+
+    // 1. Save the basic cart
     localStorage.setItem('2suk_cart', JSON.stringify(cart));
+
+    // 2. CREATE THE ORDER OBJECT (Required for Fix 1 & Fix 2)
+    // This allows the confirmation page to see your items
+    
+
+    // 3. Ensure a default delivery fee exists if none is set
+    if (!localStorage.getItem('2suk_delivery_fee')) {
+      localStorage.setItem('2suk_delivery_fee', '20');
+    }
+
     updateCartBtn();
+    
     const p = allProducts.find(p => p.id == id);
     if (change > 0 && p) showToast(`${p.name} added to cart 🛒`);
   }

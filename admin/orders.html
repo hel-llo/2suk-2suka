@@ -95,8 +95,8 @@
   <!-- Orders List -->
   <div id="ordersList" class="space-y-3"></div>
 
-  <!-- Empty State -->
-  <div id="emptyState" class="hidden flex flex-col items-center justify-center py-20 gap-4">
+<!-- Empty State -->
+  <div id="emptyState" class="hidden flex-col items-center justify-center py-20 gap-4">
     <div class="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
       <span class="material-symbols-outlined text-primary text-4xl">receipt_long</span>
     </div>
@@ -203,308 +203,276 @@
 </div>
 
 <script>
-  // ─── AUTH CHECK ──────────────────────────────────────────
-  if (localStorage.getItem('2suk_admin_logged_in') !== 'true') {
-    window.location.href = 'login.html';
-  }
+ // ─── AUTH CHECK ──────────────────────────────────────
+if (localStorage.getItem('2suk_admin_logged_in') !== 'true') {
+  window.location.href = 'login.html';
+}
 
-  // ─── PRODUCT DATA ────────────────────────────────────────
+// ─── DATA ────────────────────────────────────────────
+const PRODUCTS_LIST = JSON.parse(localStorage.getItem('2suk_products') || 'null') || [];
+function findProduct(id) {
+  const NAME_MAP = {
+    'fishball':'Fishball','kikiam':'Kikiam','squidball':'Squidball',
+    'bbq':'BBQ','siomai':'Siomai','siopao':'Siopao'
+  };
+  let p = PRODUCTS_LIST.find(p => String(p.id) === String(id));
+  if (!p) p = PRODUCTS_LIST.find(p => p.name.toLowerCase() === String(id).toLowerCase());
+  return p || { name: NAME_MAP[String(id).toLowerCase()] || 'Item #' + id, price: 0 };
+}
 
-  const DEFAULT_PRODUCTS = [
-  { id: 1, name: 'Fishball',  price: 1    },
-  { id: 2, name: 'Kikiam',    price: 2.5  },
-  { id: 3, name: 'Squidball', price: 5    },
-  { id: 4, name: 'BBQ',       price: 15   },
-  { id: 5, name: 'Siomai',    price: 25   },
-  { id: 6, name: 'Siopao',    price: 35   },
-];
-const PRODUCTS_LIST = JSON.parse(localStorage.getItem('2suk_products') || 'null') || DEFAULT_PRODUCTS;
-function findProduct(id) { return PRODUCTS_LIST.find(p => p.id == id); }
 const DELIVERY_FEE = parseFloat(localStorage.getItem('2suk_delivery_fee') || '20');
-const STATUS_ORDER = ['pending', 'confirmed', 'preparing', 'ready', 'completed'];
+
+const STATUS_LABELS = {
+  pending: 'Pending', confirmed: 'Confirmed',
+  preparing: 'Preparing', ready: 'Ready', completed: 'Completed'
+};
+const STATUS_NEXT = {
+  pending: 'confirmed', confirmed: 'preparing',
+  preparing: 'ready', ready: 'completed'
+};
 
 let allOrders = JSON.parse(localStorage.getItem('2suk_all_orders') || '[]');
 let currentFilter = 'all';
 let viewingOrderId = null;
 
-  // ─── LOAD CURRENT ORDER ──────────────────────────────────
-  function loadCurrentOrder() {
-    const current = JSON.parse(localStorage.getItem('2suk_current_order') || 'null');
-    if (current) {
-      const exists = allOrders.find(o => o.id === current.id);
-      if (!exists) {
-        allOrders.unshift(current);
-        saveOrders();
-      }
-    }
+// ─── LOAD CURRENT ORDER ──────────────────────────────
+function loadCurrentOrder() {
+  const current = JSON.parse(localStorage.getItem('2suk_current_order') || 'null');
+  if (current) {
+    const exists = allOrders.find(o => o.id === current.id);
+    if (!exists) { allOrders.unshift(current); saveOrders(); }
   }
+}
 
-  // ─── DEMO ORDERS ─────────────────────────────────────────
-  function loadDemoOrders() {
-    const demos = [
-      {
-        id: 'ORD-' + (Date.now() - 300000),
-        name: 'Maria Santos', phone: '09171234567',
-        barangay: 'San Jose', landmark: 'Near the Church',
-        orderType: 'delivery', paymentMethod: 'cod',
-        items: { fishball: 5, kikiam: 3, bbq: 1 },
-        status: 'pending', note: 'Extra spicy sauce please',
-        timestamp: new Date(Date.now() - 300000).toISOString(),
-      },
-      {
-        id: 'ORD-' + (Date.now() - 600000),
-        name: 'Juan Dela Cruz', phone: '09209876543',
-        barangay: '', landmark: '',
-        orderType: 'pickup', paymentMethod: 'gcash',
-        items: { siomai: 2, siopao: 1, squidball: 4 },
-        status: 'preparing', note: '',
-        timestamp: new Date(Date.now() - 600000).toISOString(),
-      },
-      {
-        id: 'ORD-' + (Date.now() - 900000),
-        name: 'Ana Reyes', phone: '09551112222',
-        barangay: 'Poblacion', landmark: 'Near the School',
-        orderType: 'delivery', paymentMethod: 'cod',
-        items: { fishball: 10, squidball: 5 },
-        status: 'completed', note: '',
-        timestamp: new Date(Date.now() - 900000).toISOString(),
-      },
-    ];
-    allOrders = [...demos, ...allOrders];
-    saveOrders();
-    render();
-    showToast('Demo orders loaded! 🎉');
-  }
+// ─── SAVE ORDERS ─────────────────────────────────────
+function saveOrders() {
+  localStorage.setItem('2suk_all_orders', JSON.stringify(allOrders));
+}
 
-  // ─── SAVE ORDERS ─────────────────────────────────────────
-  function saveOrders() {
-    localStorage.setItem('2suk_all_orders', JSON.stringify(allOrders));
-  }
+// ─── GET TOTAL ───────────────────────────────────────
+function getTotal(order) {
+  const subtotal = Object.entries(order.items || {}).reduce((sum, [key, qty]) => {
+    return sum + ((findProduct(key)?.price || 0) * qty);
+  }, 0);
+  return subtotal + (order.orderType === 'delivery' ? DELIVERY_FEE : 0);
+}
 
-  // ─── GET ORDER TOTAL ─────────────────────────────────────
-  function getTotal(order) {
-    const subtotal = Object.entries(order.items).reduce((sum, [key, qty]) => {
-      return sum + ((findProduct(key)?.price || 0) * qty);
-    }, 0);
-    return subtotal + (order.orderType === 'delivery' ? DELIVERY_FEE : 0);
-  }
+// ─── FORMAT TIME ─────────────────────────────────────
+function formatTime(iso) {
+  if (!iso) return 'N/A';
+  const d = new Date(iso);
+  return d.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' }) +
+         ' · ' + d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
+}
 
-  // ─── FORMAT TIME ─────────────────────────────────────────
-  function formatTime(iso) {
-    const d = new Date(iso);
-    return d.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' }) +
-           ' · ' + d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
-  }
-
-  // ─── SET FILTER ──────────────────────────────────────────
-  function setFilter(filter) {
-    currentFilter = filter;
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-      const isActive = btn.dataset.filter === filter;
-      btn.className = `filter-btn ${isActive ? 'active' : 'inactive'}`;
-    });
-    render();
-  }
-
-  // ─── RENDER ORDERS ───────────────────────────────────────
-  function render() {
-    const list = document.getElementById('ordersList');
-    const empty = document.getElementById('emptyState');
-
-    const filtered = currentFilter === 'all'
-      ? allOrders
-      : allOrders.filter(o => o.status === currentFilter);
-
-    document.getElementById('orderCount').textContent =
-      `${allOrders.length} Order${allOrders.length !== 1 ? 's' : ''}`;
-
-    if (filtered.length === 0) {
-      list.innerHTML = '';
-      empty.classList.remove('hidden');
-      empty.classList.add('flex');
-      return;
-    }
-
-    empty.classList.add('hidden');
-    empty.classList.remove('flex');
-
-    list.innerHTML = filtered.map(order => {
-      const total = getTotal(order);
-      const itemCount = Object.values(order.items).reduce((a, b) => a + b, 0);
-      const isDelivery = order.orderType === 'delivery';
-
-      return `
-        <div onclick="openModal('${order.id}')"
-          class="bg-card-cream dark:bg-[#1a0a0a] rounded-xl p-4 border border-orange-100 dark:border-white/5 cursor-pointer hover:border-primary/30 transition-all space-y-3">
-
-          <!-- Top row -->
-          <div class="flex items-start justify-between gap-2">
-            <div>
-              <p class="font-bold text-slate-900 dark:text-slate-100 text-sm">${order.id}</p>
-              <p class="text-xs text-slate-500 mt-0.5">${formatTime(order.timestamp)}</p>
-            </div>
-            <span class="badge-${order.status} px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide flex-shrink-0">
-              ${STATUS_LABELS[order.status]?.label || order.status}
-            </span>
-          </div>
-
-          <!-- Customer & type -->
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                <span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings:'FILL' 1">person</span>
-              </div>
-              <div>
-                <p class="font-bold text-sm text-slate-900 dark:text-slate-100">${order.name}</p>
-                <p class="text-xs text-slate-500">${order.phone}</p>
-              </div>
-            </div>
-            <div class="flex items-center gap-1 text-xs text-slate-500">
-              <span class="material-symbols-outlined text-sm">${isDelivery ? 'delivery_dining' : 'storefront'}</span>
-              ${isDelivery ? 'Delivery' : 'Pick-up'}
-            </div>
-          </div>
-
-          <!-- Items & total -->
-          <div class="flex items-center justify-between pt-2 border-t border-orange-100 dark:border-white/5">
-            <p class="text-xs text-slate-500">${itemCount} item${itemCount !== 1 ? 's' : ''} · ${order.paymentMethod === 'gcash' ? '📱 GCash' : '💵 COD'}</p>
-            <p class="font-bold text-primary">₱${total.toFixed(2)}</p>
-          </div>
-
-          <!-- Quick status buttons -->
-          <div class="flex gap-2" onclick="event.stopPropagation()">
-            ${getNextStatuses(order.status).map(s => `
-              <button onclick="updateStatus('${order.id}', '${s}')"
-                class="flex-1 h-9 rounded-lg bg-primary text-white text-xs font-bold hover:bg-red-700 transition-colors flex items-center justify-center gap-1">
-                <span class="material-symbols-outlined text-xs">${STATUS_LABELS[s]?.icon}</span>
-                ${STATUS_LABELS[s]?.label}
-              </button>
-            `).join('')}
-            ${order.status !== 'completed' ? `
-              <button onclick="updateStatus('${order.id}', 'completed')"
-                class="w-9 h-9 rounded-lg bg-green-600/20 text-green-400 border border-green-600/30 flex items-center justify-center hover:bg-green-600/30 transition-colors">
-                <span class="material-symbols-outlined text-sm">done_all</span>
-              </button>
-            ` : ''}
-          </div>
-
-        </div>
-      `;
-    }).join('');
-  }
-
-  // ─── GET NEXT STATUS ─────────────────────────────────────
-  function getNextStatuses(current) {
-    const idx = STATUS_ORDER.indexOf(current);
-    const next = STATUS_ORDER[idx + 1];
-    return next && next !== 'completed' ? [next] : [];
-  }
-
-  // ─── UPDATE STATUS ───────────────────────────────────────
-  function updateStatus(orderId, newStatus) {
-    const order = allOrders.find(o => o.id === orderId);
-    if (!order) return;
-    order.status = newStatus;
-    saveOrders();
-
-    // Also update current order if it's the same
-    const current = JSON.parse(localStorage.getItem('2suk_current_order') || 'null');
-    if (current && current.id === orderId) {
-      current.status = newStatus;
-      localStorage.setItem('2suk_current_order', JSON.stringify(current));
-    }
-
-    render();
-    showToast(`Order marked as ${STATUS_LABELS[newStatus]?.label} ✓`);
-
-    // Update modal if open
-    if (viewingOrderId === orderId) openModal(orderId);
-  }
-
-  // ─── OPEN MODAL ──────────────────────────────────────────
-  function openModal(orderId) {
-    const order = allOrders.find(o => o.id === orderId);
-    if (!order) return;
-    viewingOrderId = orderId;
-
-    document.getElementById('modalOrderId').textContent = order.id;
-    document.getElementById('modalTime').textContent = formatTime(order.timestamp);
-    document.getElementById('modalName').textContent = order.name;
-    document.getElementById('modalPhone').textContent = order.phone;
-    document.getElementById('modalType').textContent = order.orderType === 'delivery' ? '🛵 Delivery' : '🏪 Pick-up';
-    document.getElementById('modalPayment').textContent = order.paymentMethod === 'gcash' ? '📱 GCash' : '💵 COD';
-
-    // Address
-    const addrRow = document.getElementById('modalAddressRow');
-    if (order.orderType === 'delivery' && order.barangay) {
-      addrRow.style.display = 'flex';
-      document.getElementById('modalAddress').textContent =
-        [order.barangay, order.landmark].filter(Boolean).join(', ');
-    } else {
-      addrRow.style.display = 'none';
-    }
-
-    // Items
-    document.getElementById('modalItems').innerHTML = Object.entries(order.items).map(([key, qty]) => {
-      const p = findProduct(key);
-      if (!p) return '';
-      return `
-        <div class="flex justify-between items-center px-3 py-2">
-          <p class="text-sm font-bold">${p.name} <span class="text-slate-500 font-normal">x${qty}</span></p>
-          <p class="text-primary font-bold text-sm">₱${(p.price * qty).toFixed(2)}</p>
-        </div>
-      `;
-    }).join('');
-
-    document.getElementById('modalTotal').textContent = `₱${getTotal(order).toFixed(2)}`;
-
-    // Note
-    if (order.note) {
-      document.getElementById('modalNoteSection').classList.remove('hidden');
-      document.getElementById('modalNote').textContent = `"${order.note}"`;
-    } else {
-      document.getElementById('modalNoteSection').classList.add('hidden');
-    }
-
-    // Status buttons
-    document.getElementById('statusButtons').innerHTML = STATUS_ORDER.map(s => {
-      const isCurrent = s === order.status;
-      return `
-        <button onclick="updateStatus('${order.id}', '${s}')"
-          class="h-10 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-all ${isCurrent
-            ? 'bg-primary text-white border-2 border-primary'
-            : 'bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10'
-          }">
-          <span class="material-symbols-outlined text-xs">${STATUS_LABELS[s].icon}</span>
-          ${STATUS_LABELS[s].label}
-        </button>
-      `;
-    }).join('');
-
-    document.getElementById('detailModal').classList.add('open');
-  }
-
-  // ─── CLOSE MODAL ─────────────────────────────────────────
-  function closeModal() {
-    document.getElementById('detailModal').classList.remove('open');
-    viewingOrderId = null;
-  }
-
-  document.getElementById('detailModal').addEventListener('click', (e) => {
-    if (e.target === document.getElementById('detailModal')) closeModal();
+// ─── SET FILTER ──────────────────────────────────────
+function setFilter(filter) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.className = `filter-btn ${btn.dataset.filter === filter ? 'active' : 'inactive'}`;
   });
+  render();
+}
 
-  // ─── TOAST ───────────────────────────────────────────────
-  function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2500);
+// ─── RENDER ──────────────────────────────────────────
+function render() {
+  const list = document.getElementById('ordersList');
+  const empty = document.getElementById('emptyState');
+  const count = document.getElementById('orderCount');
+
+  const filtered = currentFilter === 'all'
+    ? allOrders
+    : allOrders.filter(o => o.status === currentFilter);
+
+  count.textContent = `${allOrders.length} Order${allOrders.length !== 1 ? 's' : ''}`;
+
+  if (filtered.length === 0) {
+    list.innerHTML = '';
+    empty.classList.remove('hidden');
+    empty.classList.add('flex');
+    return;
   }
 
-  // ─── INIT ────────────────────────────────────────────────
-  loadCurrentOrder();
+  empty.classList.add('hidden');
+  empty.classList.remove('flex');
+
+  list.innerHTML = filtered.map(order => {
+    const total = getTotal(order);
+    const itemCount = Object.values(order.items || {}).reduce((a, b) => a + b, 0);
+    const isDelivery = order.orderType === 'delivery';
+    const status = order.status || 'pending';
+    const nextStatus = STATUS_NEXT[status];
+
+    // Build item names
+    const itemNames = Object.entries(order.items || {}).map(([key, qty]) => {
+      return `${findProduct(key).name} x${qty}`;
+    }).join(', ');
+
+    return `
+      <div onclick="openModal('${order.id}')"
+        class="bg-card-cream dark:bg-[#1a0a0a] rounded-xl p-4 border border-orange-100 dark:border-white/5 cursor-pointer hover:border-primary/30 transition-all space-y-3">
+        <div class="flex items-start justify-between gap-2">
+          <div>
+            <p class="font-bold text-sm">${order.id}</p>
+            <p class="text-xs text-slate-500 mt-0.5">${formatTime(order.timestamp)}</p>
+          </div>
+          <span class="badge-${status} px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide flex-shrink-0">
+            ${STATUS_LABELS[status] || status}
+          </span>
+        </div>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+              <span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings:'FILL' 1">person</span>
+            </div>
+            <div>
+              <p class="font-bold text-sm">${order.name || 'Customer'}</p>
+              <p class="text-xs text-slate-500">${order.phone || ''}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-1 text-xs text-slate-500">
+            <span class="material-symbols-outlined text-sm">${isDelivery ? 'delivery_dining' : 'storefront'}</span>
+            ${isDelivery ? 'Delivery' : 'Pick-up'}
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 truncate">${itemNames}</p>
+        <div class="flex items-center justify-between pt-2 border-t border-white/5">
+          <p class="text-xs text-slate-500">${itemCount} item${itemCount !== 1 ? 's' : ''} · ${order.paymentMethod === 'gcash' ? '📱 GCash' : '💵 COD'}</p>
+          <p class="font-bold text-primary">₱${total.toFixed(2)}</p>
+        </div>
+        ${nextStatus ? `
+        <div onclick="event.stopPropagation()">
+          <button onclick="updateStatus('${order.id}', '${nextStatus}')"
+            class="w-full h-9 rounded-lg bg-primary text-white text-xs font-bold hover:bg-red-700 transition-colors">
+            Mark as ${STATUS_LABELS[nextStatus]}
+          </button>
+        </div>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+// ─── UPDATE STATUS ───────────────────────────────────
+function updateStatus(orderId, newStatus) {
+  const order = allOrders.find(o => o.id === orderId);
+  if (!order) return;
+  order.status = newStatus;
+  saveOrders();
+  const current = JSON.parse(localStorage.getItem('2suk_current_order') || 'null');
+  if (current && current.id === orderId) {
+    current.status = newStatus;
+    localStorage.setItem('2suk_current_order', JSON.stringify(current));
+  }
   render();
+  showToast(`Order marked as ${STATUS_LABELS[newStatus]} ✓`);
+  if (viewingOrderId === orderId) openModal(orderId);
+}
+
+// ─── OPEN MODAL ──────────────────────────────────────
+function openModal(orderId) {
+  const order = allOrders.find(o => o.id === orderId);
+  if (!order) return;
+  viewingOrderId = orderId;
+
+  document.getElementById('modalOrderId').textContent = order.id;
+  document.getElementById('modalTime').textContent = formatTime(order.timestamp);
+  document.getElementById('modalName').textContent = order.name || 'N/A';
+  document.getElementById('modalPhone').textContent = order.phone || 'N/A';
+  document.getElementById('modalType').textContent = order.orderType === 'delivery' ? '🛵 Delivery' : '🏪 Pick-up';
+  document.getElementById('modalPayment').textContent = order.paymentMethod === 'gcash' ? '📱 GCash' : '💵 COD';
+
+  const addrRow = document.getElementById('modalAddressRow');
+  if (order.orderType === 'delivery' && order.barangay) {
+    addrRow.style.display = 'flex';
+    document.getElementById('modalAddress').textContent =
+      [order.barangay, order.landmark].filter(Boolean).join(', ');
+  } else {
+    addrRow.style.display = 'none';
+  }
+
+  document.getElementById('modalItems').innerHTML = Object.entries(order.items || {}).map(([key, qty]) => {
+    const p = findProduct(key);
+    return `
+      <div class="flex justify-between items-center px-3 py-2">
+        <p class="text-sm font-bold">${p.name} <span class="text-slate-500 font-normal">x${qty}</span></p>
+        <p class="text-primary font-bold text-sm">₱${((p.price || 0) * qty).toFixed(2)}</p>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('modalTotal').textContent = `₱${getTotal(order).toFixed(2)}`;
+
+  if (order.note) {
+    document.getElementById('modalNoteSection').classList.remove('hidden');
+    document.getElementById('modalNote').textContent = `"${order.note}"`;
+  } else {
+    document.getElementById('modalNoteSection').classList.add('hidden');
+  }
+
+  const STATUS_ORDER = ['pending', 'confirmed', 'preparing', 'ready', 'completed'];
+  document.getElementById('statusButtons').innerHTML = STATUS_ORDER.map(s => {
+    const isCurrent = s === (order.status || 'pending');
+    return `
+      <button onclick="updateStatus('${order.id}', '${s}')"
+        class="h-10 rounded-xl text-xs font-bold flex items-center justify-center transition-all ${isCurrent
+          ? 'bg-primary text-white border-2 border-primary'
+          : 'bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10'}">
+        ${STATUS_LABELS[s]}
+      </button>
+    `;
+  }).join('');
+
+  document.getElementById('detailModal').classList.add('open');
+}
+
+// ─── CLOSE MODAL ─────────────────────────────────────
+function closeModal() {
+  document.getElementById('detailModal').classList.remove('open');
+  viewingOrderId = null;
+}
+
+document.getElementById('detailModal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('detailModal')) closeModal();
+});
+
+// ─── DEMO ORDERS ─────────────────────────────────────
+function loadDemoOrders() {
+  const demos = [
+    {
+      id: 'ORD-DEMO1', name: 'Maria Santos', phone: '09171234567',
+      barangay: 'San Jose', landmark: 'Near Church',
+      orderType: 'delivery', paymentMethod: 'cod',
+      items: { '1': 5, '3': 2 }, status: 'pending',
+      note: 'Extra sauce please',
+      timestamp: new Date().toISOString(),
+    },
+    {
+      id: 'ORD-DEMO2', name: 'Juan Dela Cruz', phone: '09209876543',
+      barangay: '', landmark: '',
+      orderType: 'pickup', paymentMethod: 'gcash',
+      items: { '5': 2, '6': 1 }, status: 'preparing',
+      note: '',
+      timestamp: new Date(Date.now() - 600000).toISOString(),
+    },
+  ];
+  allOrders = [...demos, ...allOrders];
+  saveOrders();
+  render();
+  showToast('Demo orders loaded! 🎉');
+}
+
+// ─── TOAST ───────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ─── INIT ────────────────────────────────────────────
+loadCurrentOrder();
+render();
+
 </script>
 </body>
 </html>

@@ -156,155 +156,123 @@
 </div>
 
 <script>
-  // ─── PRODUCT DATA ────────────────────────────────────────
-  const PRODUCTS = {
-    fishball:  { name: 'Fishball',  price: 1    },
-    kikiam:    { name: 'Kikiam',    price: 2.5  },
-    squidball: { name: 'Squidball', price: 5    },
-    bbq:       { name: 'BBQ',       price: 15   },
-    siomai:    { name: 'Siomai',    price: 25   },
-    siopao:    { name: 'Siopao',    price: 35   },
-  };
+ // ============================================================
+// FIX 2: Paste this <script> block into BOTH:
+//   - confirmation.html
+//   - tracking.html
+// Replace your existing totals/order script with this block
+// ============================================================
 
-  const DELIVERY_FEE = parseFloat(localStorage.getItem('2suk_delivery_fee') || '20');
+function loadOrderSummary() {
+  try {
+    // --- 1. Load data from localStorage ---
+    const rawOrder    = localStorage.getItem('2suk_current_order');
+    const rawProducts = localStorage.getItem('2suk_products');
+    const rawFee      = localStorage.getItem('2suk_delivery_fee');
 
-  // ─── LOAD ORDER ──────────────────────────────────────────
-  const order = JSON.parse(localStorage.getItem('2suk_current_order') || 'null');
-  if (!order) { window.location.href = 'index.html'; }
+    // Safety redirect: if no active order, go home
+    if (!rawOrder) {
+      console.warn('No current order found. Redirecting to index.html');
+      window.location.href = 'index.html';
+      return;
+    }
 
-  // ─── STATUS CONFIG ───────────────────────────────────────
-  const ALL_STEPS = [
-    { key: 'pending',    label: 'Order Received',     desc: 'Your order has been placed',          icon: 'check_circle'       },
-    { key: 'confirmed',  label: 'Order Confirmed',     desc: 'The store confirmed your order',      icon: 'storefront'         },
-    { key: 'preparing',  label: 'Preparing',           desc: 'Your food is being prepared',         icon: 'soup_kitchen'       },
-    { key: 'ready',      label: 'Ready',               desc: order?.orderType === 'delivery' ? 'Rider is on the way!' : 'Ready for pick-up!', icon: order?.orderType === 'delivery' ? 'delivery_dining' : 'done_all' },
-    { key: 'completed',  label: 'Completed',           desc: 'Order delivered. Enjoy! 🎉',          icon: 'celebration'        },
-  ];
+    const currentOrder = JSON.parse(rawOrder);
+    const products     = rawProducts ? JSON.parse(rawProducts) : [];
+    const deliveryFee  = rawFee ? parseFloat(rawFee) : 0;
 
-  const STATUS_ORDER = ['pending', 'confirmed', 'preparing', 'ready', 'completed'];
+    // currentOrder.items format: { "id": quantity, "id2": quantity2 }
+    const items = currentOrder.items || {};
 
-  const STATUS_COLORS = {
-    pending:   { dot: 'bg-yellow-400', badge: 'border-yellow-400/30 text-yellow-400', label: 'Pending'   },
-    confirmed: { dot: 'bg-blue-400',   badge: 'border-blue-400/30 text-blue-400',     label: 'Confirmed' },
-    preparing: { dot: 'bg-orange-400', badge: 'border-orange-400/30 text-orange-400', label: 'Preparing' },
-    ready:     { dot: 'bg-green-400',  badge: 'border-green-400/30 text-green-400',   label: 'Ready! 🙌' },
-    completed: { dot: 'bg-primary',    badge: 'border-primary/30 text-primary',       label: 'Completed' },
-  };
+    // --- 2. Calculate subtotal by matching item IDs to prices ---
+    let subtotal = 0;
+    const itemDetails = [];
 
-  // ─── RENDER STATUS BADGE ─────────────────────────────────
-  function renderStatusBadge(status) {
-    const config = STATUS_COLORS[status] || STATUS_COLORS.pending;
-    document.getElementById('statusDot').className = `w-2 h-2 rounded-full animate-pulse ${config.dot}`;
-    document.getElementById('statusLabel').textContent = config.label;
-    document.getElementById('statusLabel').className = `text-xs font-bold uppercase tracking-wide ${config.badge.split(' ').pop()}`;
-    document.getElementById('statusBadge').className = `flex items-center gap-2 px-3 py-2 rounded-full border ${config.badge}`;
-  }
+    Object.entries(items).forEach(([id, qty]) => {
+      const product = products.find(p => String(p.id) === String(id));
+      if (product) {
+        const price    = parseFloat(product.price) || 0;
+        const quantity = parseInt(qty) || 0;
+        const lineTotal = price * quantity;
+        subtotal += lineTotal;
 
-  // ─── RENDER STEPS ────────────────────────────────────────
-  function renderSteps(currentStatus) {
-    const currentIndex = STATUS_ORDER.indexOf(currentStatus);
-    const container = document.getElementById('stepsContainer');
+        itemDetails.push({
+          name:      product.name,
+          price:     price,
+          quantity:  quantity,
+          lineTotal: lineTotal,
+        });
+      } else {
+        console.warn('Product not found for ID:', id);
+      }
+    });
 
-    container.innerHTML = ALL_STEPS.map((step, i) => {
-      const isDone    = i < currentIndex;
-      const isActive  = i === currentIndex;
-      const isPending = i > currentIndex;
+    const total = subtotal + deliveryFee;
 
-      const circleClass = isDone
-        ? 'bg-green-500 border-green-500'
-        : isActive
-          ? 'bg-primary border-primary ping-ring'
-          : 'bg-transparent border-slate-700';
+    // --- 3. Update HTML spans ---
 
-      const iconColor = isDone || isActive ? 'text-white' : 'text-slate-600';
-      const labelColor = isDone ? 'text-green-400' : isActive ? 'text-white' : 'text-slate-600';
-      const descColor = isDone ? 'text-slate-400' : isActive ? 'text-slate-300' : 'text-slate-700';
-      const lineColor = isDone ? 'bg-green-500' : 'bg-slate-800';
+    // Subtotal
+    const subtotalEl = document.getElementById('subtotal');
+    if (subtotalEl) subtotalEl.textContent = '₱' + subtotal.toFixed(2);
 
-      return `
-        <div class="flex gap-4">
-          <!-- Left: circle + line -->
-          <div class="flex flex-col items-center" style="width:28px">
-            <div class="relative w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${circleClass}" style="z-index:1">
-              <span class="material-symbols-outlined text-sm ${iconColor}" style="font-variation-settings:'FILL' 1">${step.icon}</span>
-            </div>
-            ${i < ALL_STEPS.length - 1 ? `<div class="step-line ${lineColor} w-0.5"></div>` : ''}
-          </div>
+    // Delivery fee
+    const feeEl = document.getElementById('delivery-fee');
+    if (feeEl) feeEl.textContent = '₱' + deliveryFee.toFixed(2);
 
-          <!-- Right: text -->
-          <div class="pb-5 flex-1">
-            <p class="font-bold text-sm ${labelColor}">${step.label}</p>
-            <p class="text-xs ${descColor} mt-0.5">${step.desc}</p>
-            ${isActive ? `<span class="inline-block mt-1 text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded-full font-bold uppercase tracking-wide">Current</span>` : ''}
-          </div>
+    // Total
+    const totalEl = document.getElementById('total');
+    if (totalEl) totalEl.textContent = '₱' + total.toFixed(2);
+
+    // --- 4. Update customer details ---
+    const customer = currentOrder.customer || {};
+
+    const nameEl    = document.getElementById('customer-name');
+    const addressEl = document.getElementById('customer-address');
+    const phoneEl   = document.getElementById('customer-phone');
+    const notesEl   = document.getElementById('customer-notes');
+    const orderIdEl = document.getElementById('order-id');
+
+    if (nameEl)    nameEl.textContent    = customer.name    || 'N/A';
+    if (addressEl) addressEl.textContent = customer.address || 'N/A';
+    if (phoneEl)   phoneEl.textContent   = customer.phone   || 'N/A';
+    if (notesEl)   notesEl.textContent   = customer.notes   || 'None';
+    if (orderIdEl) orderIdEl.textContent = currentOrder.id  || 'N/A';
+
+    // --- 5. Render item list (if element exists) ---
+    const itemListEl = document.getElementById('order-items');
+    if (itemListEl && itemDetails.length > 0) {
+      itemListEl.innerHTML = itemDetails.map(item => `
+        <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:.9rem;">
+          <span>${item.name} × ${item.quantity}</span>
+          <span>₱${item.lineTotal.toFixed(2)}</span>
         </div>
-      `;
-    }).join('');
-  }
+      `).join('');
+    }
 
-  // ─── RENDER ITEMS ────────────────────────────────────────
-  function renderItems() {
-    const container = document.getElementById('orderItems');
-    container.innerHTML = Object.entries(order.items).map(([key, qty]) => {
-      const p = findProduct(key);
-      if (!p) return '';
-      return `
-        <div class="flex justify-between items-center px-4 py-3">
-          <div>
-            <p class="font-bold text-sm">${p.name}</p>
-            <p class="text-xs text-slate-500">x${qty}</p>
-          </div>
-          <p class="font-bold text-primary text-sm">₱${(p.price * qty).toFixed(2)}</p>
-        </div>
-      `;
-    }).join('');
-  }
+    // --- 6. Update order status (for tracking.html) ---
+    const statusEl = document.getElementById('order-status');
+    if (statusEl) {
+      const status = currentOrder.status || 'pending';
+      const STATUS_LABELS = {
+        pending:    'Pending — Waiting',
+        confirmed:  'Confirmed — Accepted',
+        preparing:  'Preparing — In Kitchen',
+        ready:      'Ready — For Pickup/Delivery',
+        delivering: 'Out for Delivery',
+        delivered:  'Delivered — Complete',
+        cancelled:  'Cancelled',
+      };
+      statusEl.textContent = STATUS_LABELS[status] || status;
+    }
 
-  // ─── RENDER TOTALS ───────────────────────────────────────
-  function renderTotals() {
-    const subtotal = Object.entries(order.items).reduce((sum, [key, qty]) => {
-      return sum + ((findProduct(key)?.price || 0) * qty);
-    }, 0);
-    const fee = order.orderType === 'delivery' ? DELIVERY_FEE : 0;
-    document.getElementById('totalAmount').textContent = `₱${(subtotal + fee).toFixed(2)}`;
+  } catch (err) {
+    console.error('loadOrderSummary failed:', err);
   }
+}
 
-  // ─── RENDER LOCATION ─────────────────────────────────────
-  function renderLocation() {
-    const isDelivery = order.orderType === 'delivery';
-    document.getElementById('locationTitle').textContent = isDelivery ? 'Delivery Address' : 'Pick-up Info';
-    document.getElementById('locationIcon').textContent = isDelivery ? 'location_on' : 'storefront';
-    document.getElementById('locationName').textContent = order.name;
-    document.getElementById('locationPhone').textContent = order.phone;
-    document.getElementById('locationAddress').textContent = isDelivery
-      ? [order.barangay, order.landmark].filter(Boolean).join(', ')
-      : 'Pick up at the store — we\'ll text you when ready!';
-  }
+// Run on load
+document.addEventListener('DOMContentLoaded', loadOrderSummary);
 
-  // ─── RENDER TYPE & ETA ───────────────────────────────────
-  function renderTypeEta() {
-    const isDelivery = order.orderType === 'delivery';
-    document.getElementById('typeIcon').textContent = isDelivery ? 'delivery_dining' : 'storefront';
-    document.getElementById('typeText').textContent = isDelivery ? 'Delivery' : 'Pick-up';
-    document.getElementById('etaText').textContent = isDelivery ? '20-30 min' : '15-20 min';
-  }
-
-  // ─── RENDER PAYMENT ──────────────────────────────────────
-  function renderPayment() {
-    document.getElementById('paymentText').textContent =
-      order.paymentMethod === 'gcash' ? '📱 GCash' : '💵 Cash on Delivery';
-  }
-
-  // ─── INIT ────────────────────────────────────────────────
-  const currentStatus = order.status || 'pending';
-  document.getElementById('orderId').textContent = order.id;
-  renderStatusBadge(currentStatus);
-  renderSteps(currentStatus);
-  renderItems();
-  renderTotals();
-  renderLocation();
-  renderTypeEta();
-  renderPayment();
 </script>
 </body>
 </html>
