@@ -4,6 +4,8 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>2suk-2suka Admin Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/supabase.js"></script>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
@@ -25,81 +27,53 @@
   }
 </script>
 <style>
+  body { font-family: 'Space Grotesk', sans-serif; min-height: max(884px, 100dvh); }
   .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-  body { min-height: max(884px, 100dvh); }
-
-  /* Modal styles */
   .modal-backdrop {
-    display: none;
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.6);
-    z-index: 100;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6); z-index: 100;
+    align-items: center; justify-content: center; padding: 16px;
   }
   .modal-backdrop.open { display: flex; }
   .modal-box {
-    background: #fdf8f1;
-    border-radius: 16px;
-    padding: 24px;
-    width: 100%;
-    max-width: 380px;
+    background: #fdf8f1; border-radius: 16px;
+    padding: 24px; width: 100%; max-width: 380px;
     box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    max-height: 90vh; overflow-y: auto;
   }
   .modal-input {
-    width: 100%;
-    border: 1.5px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 10px 12px;
-    font-size: 15px;
+    width: 100%; border: 1.5px solid #e2e8f0; border-radius: 8px;
+    padding: 10px 12px; font-size: 15px;
     font-family: 'Space Grotesk', sans-serif;
-    outline: none;
-    transition: border-color 0.2s;
-    background: white;
-    color: #0f172a;
-    box-sizing: border-box;
+    outline: none; transition: border-color 0.2s;
+    background: white; color: #0f172a; box-sizing: border-box;
   }
   .modal-input:focus { border-color: #da0b0b; }
-
-  /* Toast */
   #toast {
-    position: fixed;
-    bottom: 90px;
-    left: 50%;
+    position: fixed; bottom: 90px; left: 50%;
     transform: translateX(-50%) translateY(20px);
-    background: #0f172a;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 99px;
-    font-size: 13px;
-    font-weight: 600;
-    opacity: 0;
-    transition: all 0.3s;
-    z-index: 200;
+    background: #0f172a; color: white;
+    padding: 10px 20px; border-radius: 99px;
+    font-size: 13px; font-weight: 600;
+    opacity: 0; transition: all 0.3s; z-index: 200;
     white-space: nowrap;
   }
   #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-  /* Notification badge */
-  .notif-badge {
-    position: absolute;
-    top: -2px; right: -2px;
-    background: #da0b0b;
-    color: white;
-    font-size: 9px;
-    font-weight: 700;
-    border-radius: 99px;
-    padding: 1px 5px;
-    display: none;
+  .skeleton {
+    background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 12px;
   }
-  .notif-badge.show { display: block; }
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
 </style>
 </head>
 
 <body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen pb-24">
 
-<!-- Toast Notification -->
 <div id="toast"></div>
 
 <!-- Header -->
@@ -110,16 +84,13 @@
         <span class="material-symbols-outlined text-white">storefront</span>
       </div>
       <div>
-        <h1 class="text-xl font-bold leading-tight tracking-tight text-slate-900 dark:text-slate-100">2suk-2suka</h1>
+        <h1 class="text-xl font-bold leading-tight tracking-tight">2suk-2suka</h1>
         <p class="text-xs text-primary font-medium">Admin Control Center</p>
       </div>
     </div>
-    <div class="relative">
-      <button onclick="toggleNotif()" class="size-10 flex items-center justify-center rounded-full bg-slate-200 dark:bg-primary/10 text-slate-900 dark:text-primary">
-        <span class="material-symbols-outlined">notifications</span>
-      </button>
-      <span class="notif-badge" id="notifBadge">!</span>
-    </div>
+    <button onclick="logout()" class="size-10 flex items-center justify-center rounded-full bg-slate-200 dark:bg-primary/10 text-slate-900 dark:text-primary">
+      <span class="material-symbols-outlined">logout</span>
+    </button>
   </div>
 </header>
 
@@ -127,150 +98,153 @@
 
   <!-- Action Header -->
   <section class="space-y-4">
-  <div class="flex items-center justify-between">
-    <h2 class="text-2xl font-bold tracking-tight">Inventory</h2>
-    <span id="itemCount" class="px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full border border-primary/20">6 Items Total</span>
-  </div>
+    <div class="flex items-center justify-between">
+      <h2 class="text-2xl font-bold tracking-tight">Inventory</h2>
+      <span id="itemCount" class="px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full border border-primary/20">0 Items</span>
+    </div>
 
-  <!-- Delivery Fee Setting -->
-  <div class="bg-card-cream dark:bg-[#fff9f0] rounded-xl p-4 border border-orange-100 flex items-center justify-between gap-3">
-    <div class="flex items-center gap-2">
-      <span class="material-symbols-outlined text-primary text-sm">delivery_dining</span>
-      <div>
-        <p class="font-bold text-sm text-slate-900">Delivery Fee</p>
-        <p class="text-xs text-slate-500">Charged for delivery orders</p>
+    <!-- Delivery Fee -->
+    <div class="bg-card-cream dark:bg-[#1a0a0a] rounded-xl p-4 border border-orange-100 dark:border-white/5 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary text-sm">delivery_dining</span>
+        <div>
+          <p class="font-bold text-sm text-slate-900 dark:text-slate-100">Delivery Fee</p>
+          <p class="text-xs text-slate-500">Charged for delivery orders</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-primary font-bold text-sm">₱</span>
+        <input id="deliveryFeeInput" type="number" min="0" step="5"
+          class="w-20 text-center font-bold text-slate-900 bg-white border border-slate-200 rounded-lg px-2 py-2 text-sm outline-none focus:border-primary transition-colors"
+          onchange="saveDeliveryFeeHandler()" />
       </div>
     </div>
-    <div class="flex items-center gap-2">
-      <span class="text-primary font-bold text-sm">₱</span>
-      <input id="deliveryFeeInput" type="number" min="0" step="5"
-        class="w-20 text-center font-bold text-slate-900 bg-white border border-slate-200 rounded-lg px-2 py-2 text-sm outline-none focus:border-primary transition-colors"
-        onchange="saveDeliveryFee()" />
-    </div>
-  </div>
 
-  <button onclick="openAddModal()" class="w-full flex cursor-pointer items-center justify-center gap-2 rounded-xl h-14 bg-primary text-white text-lg font-bold hover:bg-red-700 transition-colors shadow-lg shadow-primary/20">
-    <span class="material-symbols-outlined">add_circle</span>
-    <span>Add New Product</span>
-  </button>
-</section>
+    <button onclick="openAddModal()"
+      class="w-full flex cursor-pointer items-center justify-center gap-2 rounded-xl h-14 bg-primary text-white text-lg font-bold hover:bg-red-700 transition-colors shadow-lg shadow-primary/20">
+      <span class="material-symbols-outlined">add_circle</span>
+      <span>Add New Product</span>
+    </button>
+  </section>
+
+  <!-- Loading -->
+  <div id="loadingState" class="space-y-3">
+    <div class="skeleton h-28 w-full"></div>
+    <div class="skeleton h-28 w-full"></div>
+    <div class="skeleton h-28 w-full"></div>
+  </div>
 
   <!-- Product List -->
   <section id="productList" class="space-y-3"></section>
 
 </main>
 
-<!-- Bottom Navigation Bar -->
+<!-- Bottom Navigation -->
 <nav class="fixed bottom-0 left-0 right-0 bg-background-light dark:bg-background-dark border-t border-primary/10 px-4 pb-6 pt-3 flex justify-around items-center z-50">
-  <a onclick="setNav('inventory')" class="nav-link flex flex-col items-center gap-1 cursor-pointer text-primary" data-tab="inventory">
-    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+  <a href="dashboard.html" class="flex flex-col items-center gap-1 text-primary">
+    <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">dashboard</span>
     <span class="text-[10px] font-bold uppercase tracking-wider">Inventory</span>
   </a>
-  <a onclick="setNav('orders')" class="nav-link flex flex-col items-center gap-1 cursor-pointer text-slate-500 dark:text-slate-400" data-tab="orders">
+  <a href="orders.html" class="flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400">
     <span class="material-symbols-outlined">receipt_long</span>
     <span class="text-[10px] font-bold uppercase tracking-wider">Orders</span>
   </a>
-  <a onclick="setNav('reports')" class="nav-link flex flex-col items-center gap-1 cursor-pointer text-slate-500 dark:text-slate-400" data-tab="reports">
+  <a href="reports.html" class="flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400">
     <span class="material-symbols-outlined">analytics</span>
     <span class="text-[10px] font-bold uppercase tracking-wider">Reports</span>
   </a>
-  <a onclick="setNav('settings')" class="nav-link flex flex-col items-center gap-1 cursor-pointer text-slate-500 dark:text-slate-400" data-tab="settings">
+  <a href="settings.html" class="flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400">
     <span class="material-symbols-outlined">settings</span>
     <span class="text-[10px] font-bold uppercase tracking-wider">Settings</span>
   </a>
 </nav>
 
-<!-- ADD PRODUCT MODAL -->
+<!-- ADD MODAL -->
 <div class="modal-backdrop" id="addModal">
   <div class="modal-box">
     <h3 class="text-lg font-bold text-slate-900 mb-1">Add New Product</h3>
     <p class="text-xs text-slate-500 mb-4">Fill in the details below</p>
-
     <div class="space-y-3">
-  <div>
-    <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Product Name</label>
-    <input id="addName" class="modal-input mt-1" type="text" placeholder="e.g. Isaw" />
-  </div>
-  <div class="flex gap-2">
-    <div class="flex-1">
-      <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Price (₱)</label>
-      <input id="addPrice" class="modal-input mt-1" type="number" placeholder="0.00" min="0" step="0.5" />
+      <div>
+        <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Product Name</label>
+        <input id="addName" class="modal-input mt-1" type="text" placeholder="e.g. Isaw" />
+      </div>
+      <div class="flex gap-2">
+        <div class="flex-1">
+          <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Price (₱)</label>
+          <input id="addPrice" class="modal-input mt-1" type="number" placeholder="0.00" min="0" step="0.5" />
+        </div>
+        <div class="flex-1">
+          <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Unit</label>
+          <input id="addUnit" class="modal-input mt-1" type="text" placeholder="pc / stick" />
+        </div>
+      </div>
+      <div>
+        <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Category</label>
+        <select id="addCategory" class="modal-input mt-1" style="padding-left:12px">
+          <option value="fried">🔥 Fried</option>
+          <option value="grill">🍢 Grilled / Steamed</option>
+          <option value="drinks">🥤 Drinks</option>
+          <option value="snacks">🍿 Snacks</option>
+          <option value="rice">🍚 Rice Meals</option>
+          <option value="others">📦 Others</option>
+        </select>
+      </div>
+      <div>
+        <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Options / Variants</label>
+        <input id="addOptions" class="modal-input mt-1" type="text" placeholder="e.g. Sweet Sauce, Spicy Sauce" />
+        <p class="text-xs text-slate-400 mt-1">Separate with commas. Type "None" if no options.</p>
+      </div>
+      <div>
+        <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Image URL (optional)</label>
+        <input id="addImg" class="modal-input mt-1" type="text" placeholder="https://..." />
+      </div>
     </div>
-    <div class="flex-1">
-      <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Unit</label>
-      <input id="addUnit" class="modal-input mt-1" type="text" placeholder="pc / stick / order" />
-    </div>
-  </div>
-  <div>
-    <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Category</label>
-    <select id="addCategory" class="modal-input mt-1" style="padding-left:12px">
-      <option value="fried">🔥 Fried</option>
-      <option value="grill">🍢 Grilled / Steamed</option>
-      <option value="drinks">🥤 Drinks</option>
-      <option value="snacks">🍿 Snacks</option>
-      <option value="rice">🍚 Rice Meals</option>
-      <option value="others">📦 Others</option>
-    </select>
-  </div>
-  <div>
-    <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Options / Variants</label>
-    <input id="addOptions" class="modal-input mt-1" type="text" placeholder="e.g. Sweet Sauce, Spicy Sauce, None" />
-    <p class="text-xs text-slate-400 mt-1">Separate with commas. Type "None" if no options.</p>
-  </div>
-  <div>
-    <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Image URL (optional)</label>
-    <input id="addImg" class="modal-input mt-1" type="text" placeholder="https://..." />
-  </div>
-</div>
-
     <div class="flex gap-2 mt-5">
       <button onclick="closeModals()" class="flex-1 h-11 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm">Cancel</button>
-      <button onclick="addProduct()" class="flex-1 h-11 rounded-xl bg-primary text-white font-bold text-sm hover:bg-red-700 transition-colors">Add Product</button>
+      <button onclick="addProductHandler()" id="addBtn" class="flex-1 h-11 rounded-xl bg-primary text-white font-bold text-sm hover:bg-red-700 transition-colors">Add Product</button>
     </div>
   </div>
 </div>
 
-<!-- EDIT PRICE MODAL -->
+<!-- EDIT MODAL -->
 <div class="modal-backdrop" id="editModal">
   <div class="modal-box">
-    <h3 class="text-lg font-bold text-slate-900 mb-1">Edit Price</h3>
-    <p class="text-xs text-slate-500 mb-4" id="editProductName">Product name</p>
-
+    <h3 class="text-lg font-bold text-slate-900 mb-1">Edit Product</h3>
+    <p class="text-xs text-slate-500 mb-4" id="editProductName"></p>
     <div class="space-y-3">
-  <div>
-    <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">New Price (₱)</label>
-    <input id="editPrice" class="modal-input mt-1" type="number" placeholder="0.00" min="0" step="0.5" />
-  </div>
-  <div>
-    <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Unit</label>
-    <input id="editUnit" class="modal-input mt-1" type="text" placeholder="pc / stick / order" />
-  </div>
-  <div>
-    <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Category</label>
-    <select id="editCategory" class="modal-input mt-1" style="padding-left:12px">
-      <option value="fried">🔥 Fried</option>
-      <option value="grill">🍢 Grilled / Steamed</option>
-      <option value="drinks">🥤 Drinks</option>
-      <option value="snacks">🍿 Snacks</option>
-      <option value="rice">🍚 Rice Meals</option>
-      <option value="others">📦 Others</option>
-    </select>
-  </div>
-  <div>
-    <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Options / Variants</label>
-    <input id="editOptions" class="modal-input mt-1" type="text" placeholder="e.g. Sweet Sauce, Spicy Sauce, None" />
-    <p class="text-xs text-slate-400 mt-1">Separate with commas. Type "None" if no options.</p>
-  </div>
-</div>
-
+      <div>
+        <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">New Price (₱)</label>
+        <input id="editPrice" class="modal-input mt-1" type="number" placeholder="0.00" min="0" step="0.5" />
+      </div>
+      <div>
+        <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Unit</label>
+        <input id="editUnit" class="modal-input mt-1" type="text" placeholder="pc / stick / order" />
+      </div>
+      <div>
+        <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Category</label>
+        <select id="editCategory" class="modal-input mt-1" style="padding-left:12px">
+          <option value="fried">🔥 Fried</option>
+          <option value="grill">🍢 Grilled / Steamed</option>
+          <option value="drinks">🥤 Drinks</option>
+          <option value="snacks">🍿 Snacks</option>
+          <option value="rice">🍚 Rice Meals</option>
+          <option value="others">📦 Others</option>
+        </select>
+      </div>
+      <div>
+        <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Options / Variants</label>
+        <input id="editOptions" class="modal-input mt-1" type="text" placeholder="e.g. Sweet Sauce, Spicy Sauce" />
+      </div>
+    </div>
     <div class="flex gap-2 mt-5">
       <button onclick="closeModals()" class="flex-1 h-11 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm">Cancel</button>
-      <button onclick="saveEdit()" class="flex-1 h-11 rounded-xl bg-primary text-white font-bold text-sm hover:bg-red-700 transition-colors">Save Changes</button>
+      <button onclick="saveEditHandler()" id="editBtn" class="flex-1 h-11 rounded-xl bg-primary text-white font-bold text-sm hover:bg-red-700 transition-colors">Save Changes</button>
     </div>
   </div>
 </div>
 
-<!-- DELETE CONFIRM MODAL -->
+<!-- DELETE MODAL -->
 <div class="modal-backdrop" id="deleteModal">
   <div class="modal-box">
     <div class="flex items-center justify-center w-14 h-14 bg-red-100 rounded-full mx-auto mb-4">
@@ -278,53 +252,63 @@
     </div>
     <h3 class="text-lg font-bold text-slate-900 text-center mb-1">Delete Product?</h3>
     <p class="text-sm text-slate-500 text-center mb-5" id="deleteProductName">Are you sure?</p>
-
     <div class="flex gap-2">
       <button onclick="closeModals()" class="flex-1 h-11 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm">Cancel</button>
-      <button onclick="confirmDelete()" class="flex-1 h-11 rounded-xl bg-primary text-white font-bold text-sm hover:bg-red-700 transition-colors">Yes, Delete</button>
+      <button onclick="confirmDeleteHandler()" id="deleteBtn" class="flex-1 h-11 rounded-xl bg-primary text-white font-bold text-sm hover:bg-red-700 transition-colors">Yes, Delete</button>
     </div>
   </div>
 </div>
 
 <script>
-  // ─── DATA ───────────────────────────────────────────────
-  let products = JSON.parse(localStorage.getItem('2suk_products') || 'null') || [
-  { id: 1, name: 'Fishball',  price: 2.00,  unit: 'pc',    available: true,  img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDS73HyMdgZiHQqukH1pihvQtsRcYmcb0ilYsFuFfpdLrnqQjSWCzRwjmWm6FZmqQBTTT4E2Mye3FKqngxylybqQTAVBqJC0het2X9e3YJ0TGCtM0eGkZJEfFNpI0dWGrFne5VRfdLm4NMjkXCnyWMuamLyAGLO_WN2H0U0QnI2JBHMMe3BoVtAXFolkg5OI5tjupRUpoUeBrRll2Vs-2rvWABZKWHclAOTrhAllBdOtFZpvtTbfjcRrYat0ZHxHh-qI_qjJquagzaQ' },
-  { id: 2, name: 'Kikiam',    price: 3.50,  unit: 'pc',    available: true,  img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDQUD7RQ1Em24L0Huu1HLAGJr_UNebRUWVCQnSRPDlvaDgTMEgd0Ptuchl28ghWi-1uHOA_bs-houAV217c6iBG8kGBXIwlCuho8i3ZdeP4zg_fVDE2kNhYhFv-3f1j_M-XJMFi8C81t_g7dFlPegWFHXWTRU7xB6aXCIpD9J1fNoCnGmaCTCPlo5zU1fnytQ6Ln9N2XS9Fw8P0DGQeJo6HHJuxCHZySyXMeKDPptQS9K9OxyZz9XY5ivNJf40yXEimE-ydwQSRpYb0' },
-  { id: 3, name: 'Squidball', price: 4.00,  unit: 'pc',    available: true,  img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDcBd9jj0RfkS1d0Q6S_DW06tHBi7S3JW6Mx4eo7cmTmIhymQ04PC_ahK7i4icePUOu2JuzCorv_3MmnNyeq6iULvbluZWTyLzPNQMhfBIcs3fRHTWffp8uD03AslJqUY408RLDbwGvMv3wqer78-jOQZGATnTsWUw6-_33sP2D96m0OYt1UKX4a28mq-uX4u-oBuzdknnOtW0Wy-GzaM2Z1nVwFYJXs9dAhu_DSnnllWUSbL-Ks_uuDR49VY_bDFPN-C6llwHjTPFg' },
-  { id: 4, name: 'BBQ',       price: 15.00, unit: 'stick', available: false, img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDVX6aOXJhMsAXXP8BwKVMK4bwiAqLjAk4uyhfHDZpQw-M9OtZLK8c_OO2HFJQaBoCJpmLA_IetBHJ5OwgZK3Qg1_SDTYfc5YMQLRh8ye45YfBI8fL23ax9HFgOnNKtPaqMBBhcEbfCMA1MYJOupenHxJaAcFjKWQDo_BXJlezUNsb6jmroZI-L2IACsR8BcBAee0PFp-f95qt2BR0z-pQ67xregY0QOqU2UDLeb4sZK8BfkMAX6xukUv46v-KJkqyBI28a8N5NFgcC' },
-  { id: 5, name: 'Siomai',    price: 5.00,  unit: 'pc',    available: true,  img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA3Amy2uYlx2eVVmhyOlhAG1L_m8-EX8bMQ387NVjJrjInmkPz4REdgtHi1Bab74dRHF0BaCwtrR1FAoqfaXf0GPnVM3tQ5DB7Q2K_W73kIe0nYZy0r5eKWk-vL4wfdZKfp-OygjSWrgm9mHtKC_RWfXE65xpO74wfoXH9-dje0V6UFl9Gg88iBNFCign_ixmry7vXv7ytJu9cKyHzIgYvAxnSsDYYbZBjMIEkbaaKTDzl-QrExLiomR1b6T9k5GsFHo7aFc4040mjl' },
-  { id: 6, name: 'Siopao',    price: 25.00, unit: 'pc',    available: true,  img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBqEanRY4leOHx7PvOIxxrxkaRdMEgIU_Oph4JHV0ERGkPMzj9invQKSiUP_vuijx3FGbtDbf45vdnxZhVYtYi3J5DX96MKv7sichSJB9CdifkeFxeaP-n3PDU6xRiM0RmD8ypvdAJQ23voH6SFfo6q-B8wTOhrqhdyQg-dhOMdesl27W8_458o35qCq9AQbhqEeJAMEMyQBtFCa6qO8iot-W5alOpSCmn-90C1p1DQp-Qb8DU-BK06nCKmyHqacDcA7w82m4kbWZLz' },
-];
+  if (localStorage.getItem('2suk_admin_logged_in') !== 'true') {
+    window.location.href = 'login.html';
+  }
 
-  let nextId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
+  let products = [];
   let editingId = null;
   let deletingId = null;
 
-  // ─── RENDER ─────────────────────────────────────────────
+  async function init() {
+    try {
+      const data = await getProducts();
+      if (data) {
+        products = data;
+        localStorage.setItem('2suk_products', JSON.stringify(products));
+      }
+      const fee = await getDeliveryFee();
+      document.getElementById('deliveryFeeInput').value = fee;
+      localStorage.setItem('2suk_delivery_fee', fee);
+    } catch (err) {
+      console.warn('Supabase unavailable:', err);
+      products = JSON.parse(localStorage.getItem('2suk_products') || '[]');
+      document.getElementById('deliveryFeeInput').value = localStorage.getItem('2suk_delivery_fee') || '20';
+    }
+    document.getElementById('loadingState').classList.add('hidden');
+    render();
+  }
+
   function render() {
-    localStorage.setItem('2suk_products', JSON.stringify(products)); // ADD THIS LINE
     const list = document.getElementById('productList');
     const count = document.getElementById('itemCount');
     count.textContent = `${products.length} Item${products.length !== 1 ? 's' : ''} Total`;
+    localStorage.setItem('2suk_products', JSON.stringify(products));
 
     list.innerHTML = products.map(p => `
       <div class="bg-card-cream dark:bg-[#fff9f0] rounded-xl p-4 flex flex-col gap-4 shadow-sm border border-orange-100 ${!p.available ? 'opacity-70' : ''}">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-4">
             <div class="size-16 rounded-lg bg-cover bg-center border-2 border-primary/10 bg-slate-200"
-              style="${p.img ? `background-image: url('${p.img}')` : ''}">
-              ${!p.img ? `<span class="material-symbols-outlined text-slate-400 text-2xl flex items-center justify-center h-full">restaurant</span>` : ''}
-            </div>
+              style="${p.img ? `background-image:url('${p.img}')` : ''}"></div>
             <div class="flex flex-col">
               <h3 class="text-slate-900 text-lg font-bold">${p.name}</h3>
-              <p class="text-primary font-bold">₱${p.price.toFixed(2)} <span class="text-slate-500 text-xs font-normal">/ ${p.unit}</span></p>
+              <p class="text-primary font-bold">₱${p.price} <span class="text-slate-500 text-xs font-normal">/ ${p.unit || 'pc'}</span></p>
+              <p class="text-slate-400 text-xs capitalize">${p.category || 'fried'}</p>
             </div>
           </div>
           <div class="flex flex-col items-end gap-2">
             <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" class="sr-only peer" ${p.available ? 'checked' : ''} onchange="toggleAvailability(${p.id})" />
-              <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+              <input type="checkbox" class="sr-only peer" ${p.available ? 'checked' : ''} onchange="toggleHandler(${p.id}, this.checked)" />
+              <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
             </label>
             <span class="text-[10px] uppercase font-bold ${p.available ? 'text-green-600' : 'text-slate-400'}">
               ${p.available ? 'Available' : 'Sold Out'}
@@ -334,7 +318,7 @@
         <div class="flex gap-2 border-t border-orange-100 pt-3">
           <button onclick="openEditModal(${p.id})" class="flex-1 flex items-center justify-center gap-1 h-10 rounded-lg bg-slate-900 text-white text-sm font-bold hover:bg-slate-700 transition-colors">
             <span class="material-symbols-outlined text-sm">edit</span>
-            Edit Price
+            Edit
           </button>
           <button onclick="openDeleteModal(${p.id})" class="w-12 h-10 flex items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors">
             <span class="material-symbols-outlined">delete</span>
@@ -344,78 +328,100 @@
     `).join('');
   }
 
-  // ─── TOGGLE AVAILABILITY ────────────────────────────────
-  function toggleAvailability(id) {
-  const p = products.find(p => p.id === id);
-  if (!p) return;
-  p.available = !p.available;
-  localStorage.setItem('2suk_products', JSON.stringify(products)); // ADD THIS LINE
-  render();
-  showToast(`${p.name} marked as ${p.available ? 'Available ✓' : 'Sold Out'}`);
-}
+  async function toggleHandler(id, available) {
+    const p = products.find(p => p.id === id);
+    if (!p) return;
+    p.available = available;
+    render();
+    const ok = await toggleProduct(id, available);
+    if (ok) {
+      showToast(`${p.name} marked as ${available ? 'Available ✓' : 'Sold Out'}`);
+    } else {
+      showToast('Failed to update — check connection');
+      p.available = !available;
+      render();
+    }
+  }
 
-  // ─── ADD PRODUCT ────────────────────────────────────────
   function openAddModal() {
-    document.getElementById('addName').value = '';
-    document.getElementById('addPrice').value = '';
-    document.getElementById('addUnit').value = '';
-    document.getElementById('addImg').value = '';
+    ['addName','addPrice','addUnit','addOptions','addImg'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
     document.getElementById('addModal').classList.add('open');
   }
 
-  function addProduct() {
-  const name     = document.getElementById('addName').value.trim();
-  const price    = parseFloat(document.getElementById('addPrice').value);
-  const unit     = document.getElementById('addUnit').value.trim() || 'pc';
-  const img      = document.getElementById('addImg').value.trim();
-  const category = document.getElementById('addCategory').value;
-  const optionsRaw = document.getElementById('addOptions').value.trim();
-  const options  = optionsRaw ? optionsRaw.split(',').map(o => o.trim()).filter(Boolean) : ['None'];
+  async function addProductHandler() {
+    const name     = document.getElementById('addName').value.trim();
+    const price    = parseFloat(document.getElementById('addPrice').value);
+    const unit     = document.getElementById('addUnit').value.trim() || 'pc';
+    const img      = document.getElementById('addImg').value.trim();
+    const category = document.getElementById('addCategory').value;
+    const optionsRaw = document.getElementById('addOptions').value.trim();
+    const options  = optionsRaw ? optionsRaw.split(',').map(o => o.trim()).filter(Boolean) : ['None'];
 
-  if (!name) return shakeInput('addName');
-  if (isNaN(price) || price < 0) return shakeInput('addPrice');
+    if (!name) return shakeInput('addName');
+    if (isNaN(price) || price < 0) return shakeInput('addPrice');
 
-  products.push({ id: nextId++, name, price, unit, available: true, img, category, options });
-  closeModals();
-  render();
-  showToast(`${name} added! 🎉`);
-}
+    const btn = document.getElementById('addBtn');
+    btn.textContent = 'Saving...';
+    btn.disabled = true;
 
-  // ─── EDIT PRICE ─────────────────────────────────────────
+    const newProduct = await addProduct({ name, price, unit, img, category, options, available: true });
+
+    btn.textContent = 'Add Product';
+    btn.disabled = false;
+
+    if (newProduct) {
+      products.push(newProduct);
+      closeModals();
+      render();
+      showToast(`${name} added! 🎉`);
+    } else {
+      showToast('Failed to add — check connection');
+    }
+  }
+
   function openEditModal(id) {
-  const p = products.find(p => p.id === id);
-  if (!p) return;
-  editingId = id;
-  document.getElementById('editProductName').textContent = `Editing: ${p.name}`;
-  document.getElementById('editPrice').value = p.price;
-  document.getElementById('editUnit').value = p.unit;
-  document.getElementById('editCategory').value = p.category || 'fried';
-  document.getElementById('editOptions').value = p.options ? p.options.join(', ') : 'None';
-  document.getElementById('editModal').classList.add('open');
-}
+    const p = products.find(p => p.id === id);
+    if (!p) return;
+    editingId = id;
+    document.getElementById('editProductName').textContent = `Editing: ${p.name}`;
+    document.getElementById('editPrice').value = p.price;
+    document.getElementById('editUnit').value = p.unit || 'pc';
+    document.getElementById('editCategory').value = p.category || 'fried';
+    document.getElementById('editOptions').value = p.options ? p.options.join(', ') : 'None';
+    document.getElementById('editModal').classList.add('open');
+  }
 
-  function saveEdit() {
-  const price    = parseFloat(document.getElementById('editPrice').value);
-  const unit     = document.getElementById('editUnit').value.trim();
-  const category = document.getElementById('editCategory').value;
-  const optionsRaw = document.getElementById('editOptions').value.trim();
-  const options  = optionsRaw ? optionsRaw.split(',').map(o => o.trim()).filter(Boolean) : ['None'];
+  async function saveEditHandler() {
+    const price      = parseFloat(document.getElementById('editPrice').value);
+    const unit       = document.getElementById('editUnit').value.trim();
+    const category   = document.getElementById('editCategory').value;
+    const optionsRaw = document.getElementById('editOptions').value.trim();
+    const options    = optionsRaw ? optionsRaw.split(',').map(o => o.trim()).filter(Boolean) : ['None'];
 
-  if (isNaN(price) || price < 0) return shakeInput('editPrice');
+    if (isNaN(price) || price < 0) return shakeInput('editPrice');
 
-  const p = products.find(p => p.id === editingId);
-  if (!p) return;
-  p.price    = price;
-  p.unit     = unit || p.unit;
-  p.category = category;
-  p.options  = options;
+    const btn = document.getElementById('editBtn');
+    btn.textContent = 'Saving...';
+    btn.disabled = true;
 
-  closeModals();
-  render();
-  showToast(`${p.name} updated ✓`);
-}
+    const ok = await updateProduct(editingId, { price, unit, category, options });
 
-  // ─── DELETE ─────────────────────────────────────────────
+    btn.textContent = 'Save Changes';
+    btn.disabled = false;
+
+    if (ok) {
+      const p = products.find(p => p.id === editingId);
+      if (p) { p.price = price; p.unit = unit; p.category = category; p.options = options; }
+      closeModals();
+      render();
+      showToast(`Updated to ₱${price.toFixed(2)} ✓`);
+    } else {
+      showToast('Failed to update — check connection');
+    }
+  }
+
   function openDeleteModal(id) {
     const p = products.find(p => p.id === id);
     if (!p) return;
@@ -424,27 +430,46 @@
     document.getElementById('deleteModal').classList.add('open');
   }
 
-  function confirmDelete() {
+  async function confirmDeleteHandler() {
     const p = products.find(p => p.id === deletingId);
-    products = products.filter(p => p.id !== deletingId);
-    closeModals();
-    render();
-    showToast(`${p?.name} deleted`);
+    const btn = document.getElementById('deleteBtn');
+    btn.textContent = 'Deleting...';
+    btn.disabled = true;
+
+    const ok = await deleteProduct(deletingId);
+
+    btn.textContent = 'Yes, Delete';
+    btn.disabled = false;
+
+    if (ok) {
+      products = products.filter(p => p.id !== deletingId);
+      closeModals();
+      render();
+      showToast(`${p?.name} deleted`);
+    } else {
+      showToast('Failed to delete — check connection');
+    }
   }
 
-  // ─── MODALS ─────────────────────────────────────────────
+  async function saveDeliveryFeeHandler() {
+    const fee = parseFloat(document.getElementById('deliveryFeeInput').value);
+    if (isNaN(fee) || fee < 0) {
+      document.getElementById('deliveryFeeInput').value = 20;
+      return;
+    }
+    localStorage.setItem('2suk_delivery_fee', fee.toString());
+    const ok = await saveDeliveryFee(fee);
+    showToast(ok ? `Delivery fee updated to ₱${fee.toFixed(2)} ✓` : 'Saved locally — check connection');
+  }
+
   function closeModals() {
     document.querySelectorAll('.modal-backdrop').forEach(m => m.classList.remove('open'));
   }
 
-  // Close modal when clicking backdrop
   document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
-    backdrop.addEventListener('click', (e) => {
-      if (e.target === backdrop) closeModals();
-    });
+    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeModals(); });
   });
 
-  // ─── TOAST ──────────────────────────────────────────────
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg;
@@ -452,7 +477,6 @@
     setTimeout(() => t.classList.remove('show'), 2500);
   }
 
-  // ─── SHAKE INVALID INPUT ────────────────────────────────
   function shakeInput(id) {
     const el = document.getElementById(id);
     el.style.borderColor = '#da0b0b';
@@ -460,43 +484,12 @@
     setTimeout(() => el.style.borderColor = '', 1500);
   }
 
-  // ─── BOTTOM NAV ─────────────────────────────────────────
-  function setNav(tab) {
-    document.querySelectorAll('.nav-link').forEach(a => {
-      const isActive = a.dataset.tab === tab;
-      a.classList.toggle('text-primary', isActive);
-      a.classList.toggle('text-slate-500', !isActive);
-    });
-    // Navigate to other pages
-    if (tab === 'orders')   window.location.href = 'orders.html';
-    if (tab === 'reports')  window.location.href = 'reports.html';
-    if (tab === 'settings') window.location.href = 'settings.html';
+  function logout() {
+    localStorage.removeItem('2suk_admin_logged_in');
+    window.location.href = 'login.html';
   }
 
-  // ─── NOTIFICATION ───────────────────────────────────────
-  function toggleNotif() {
-    showToast('No new notifications');
-  }
-
-  // ─── INIT ───────────────────────────────────────────────
-
-  // ─── DELIVERY FEE ────────────────────────────────────
-function loadDeliveryFee() {
-  const fee = localStorage.getItem('2suk_delivery_fee') || '30';
-  document.getElementById('deliveryFeeInput').value = fee;
-}
-
-function saveDeliveryFee() {
-  const fee = parseFloat(document.getElementById('deliveryFeeInput').value);
-  if (isNaN(fee) || fee < 0) {
-    document.getElementById('deliveryFeeInput').value = 30;
-    return;
-  }
-  localStorage.setItem('2suk_delivery_fee', fee.toString());
-  showToast(`Delivery fee updated to ₱${fee.toFixed(2)} ✓`);
-}
-  loadDeliveryFee();
-render();
+  init();
 </script>
 </body>
 </html>
