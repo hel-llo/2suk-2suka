@@ -16,9 +16,7 @@
       extend: {
         colors: {
           "primary": "#da0b0b",
-          "background-light": "#f8f5f5",
           "background-dark": "#0a0505",
-          "card-cream": "#fdf8f1",
         },
         fontFamily: { "display": ["Space Grotesk", "sans-serif"] },
         borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
@@ -29,26 +27,12 @@
 <style>
   body { font-family: 'Space Grotesk', sans-serif; min-height: max(884px, 100dvh); }
   .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-
-  @keyframes countUp {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
+  .stat-card { background: #1a0a0a; border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 16px; }
+  .skeleton {
+    background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
+    background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 12px;
   }
-  .count-anim { animation: countUp 0.5s ease forwards; }
-
-  .stat-card {
-    background: #1a0a0a;
-    border: 1px solid rgba(255,255,255,0.05);
-    border-radius: 12px;
-    padding: 16px;
-  }
-
-  .bar-fill {
-    height: 100%;
-    border-radius: 4px;
-    background: #da0b0b;
-    transition: width 0.8s ease;
-  }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 </style>
 </head>
 
@@ -66,122 +50,131 @@
         <p class="text-xs text-primary font-medium">Sales & performance</p>
       </div>
     </div>
-    <!-- Period Toggle -->
-    <div class="flex gap-1 bg-white/5 rounded-xl p-1 border border-white/10">
-      <button onclick="setPeriod('today')" data-period="today"
-        class="period-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-primary text-white">
-        Today
+    <div class="flex items-center gap-2">
+      <button onclick="loadReports()" class="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 text-slate-300 hover:bg-white/20 transition-colors">
+        <span class="material-symbols-outlined text-sm">refresh</span>
       </button>
-      <button onclick="setPeriod('week')" data-period="week"
-        class="period-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400">
-        Week
-      </button>
-      <button onclick="setPeriod('all')" data-period="all"
-        class="period-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400">
-        All
-      </button>
+      <div class="flex gap-1 bg-white/5 rounded-xl p-1 border border-white/10">
+        <button onclick="setPeriod('today')" data-period="today" class="period-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-primary text-white">Today</button>
+        <button onclick="setPeriod('week')" data-period="week" class="period-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400">Week</button>
+        <button onclick="setPeriod('all')" data-period="all" class="period-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400">All</button>
+      </div>
     </div>
   </div>
 </header>
 
 <main class="max-w-2xl mx-auto p-4 space-y-4">
 
-  <!-- Summary Stats -->
-  <div class="grid grid-cols-2 gap-3">
-    <div class="stat-card">
-      <p class="text-xs text-slate-500 font-bold uppercase tracking-wide mb-2">Total Revenue</p>
-      <p class="text-2xl font-bold text-primary count-anim" id="totalRevenue">₱0.00</p>
-      <p class="text-xs text-slate-600 mt-1" id="revenueNote">from completed orders</p>
-    </div>
-    <div class="stat-card">
-      <p class="text-xs text-slate-500 font-bold uppercase tracking-wide mb-2">Total Orders</p>
-      <p class="text-2xl font-bold text-white count-anim" id="totalOrders">0</p>
-      <p class="text-xs text-slate-600 mt-1" id="ordersNote">all statuses</p>
-    </div>
-    <div class="stat-card">
-      <p class="text-xs text-slate-500 font-bold uppercase tracking-wide mb-2">Completed</p>
-      <p class="text-2xl font-bold text-green-400 count-anim" id="completedOrders">0</p>
-      <p class="text-xs text-slate-600 mt-1">delivered & done</p>
-    </div>
-    <div class="stat-card">
-      <p class="text-xs text-slate-500 font-bold uppercase tracking-wide mb-2">Pending</p>
-      <p class="text-2xl font-bold text-yellow-400 count-anim" id="pendingOrders">0</p>
-      <p class="text-xs text-slate-600 mt-1">needs attention</p>
-    </div>
-  </div>
-
-  <!-- Order Type Breakdown -->
-  <div class="stat-card space-y-3">
-    <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Order Type Breakdown</p>
-    <div class="space-y-2">
-      <div class="flex items-center justify-between text-sm mb-1">
-        <div class="flex items-center gap-2">
-          <span class="material-symbols-outlined text-primary text-sm">delivery_dining</span>
-          <span class="font-bold">Delivery</span>
-        </div>
-        <span class="font-bold text-primary" id="deliveryCount">0 orders</span>
-      </div>
-      <div class="w-full bg-white/5 rounded-full h-2">
-        <div class="bar-fill" id="deliveryBar" style="width: 0%"></div>
-      </div>
-    </div>
-    <div class="space-y-2">
-      <div class="flex items-center justify-between text-sm mb-1">
-        <div class="flex items-center gap-2">
-          <span class="material-symbols-outlined text-blue-400 text-sm">storefront</span>
-          <span class="font-bold">Pick-up</span>
-        </div>
-        <span class="font-bold text-blue-400" id="pickupCount">0 orders</span>
-      </div>
-      <div class="w-full bg-white/5 rounded-full h-2">
-        <div class="h-full rounded-full bg-blue-400 transition-all duration-700" id="pickupBar" style="width: 0%"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Payment Breakdown -->
-  <div class="stat-card space-y-3">
-    <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Payment Method</p>
+  <!-- Loading -->
+  <div id="loadingState" class="space-y-4">
     <div class="grid grid-cols-2 gap-3">
-      <div class="bg-white/5 rounded-xl p-3 border border-white/10 text-center">
-        <p class="text-2xl mb-1">💵</p>
-        <p class="font-bold text-lg" id="codCount">0</p>
-        <p class="text-xs text-slate-500 font-bold uppercase">COD</p>
+      <div class="skeleton h-24"></div>
+      <div class="skeleton h-24"></div>
+      <div class="skeleton h-24"></div>
+      <div class="skeleton h-24"></div>
+    </div>
+    <div class="skeleton h-32"></div>
+    <div class="skeleton h-48"></div>
+  </div>
+
+  <!-- Content -->
+  <div id="reportsContent" class="hidden space-y-4">
+
+    <!-- Summary Stats -->
+    <div class="grid grid-cols-2 gap-3">
+      <div class="stat-card">
+        <p class="text-xs text-slate-500 font-bold uppercase tracking-wide mb-2">Total Revenue</p>
+        <p class="text-2xl font-bold text-primary" id="totalRevenue">₱0.00</p>
+        <p class="text-xs text-slate-600 mt-1">from completed orders</p>
       </div>
-      <div class="bg-white/5 rounded-xl p-3 border border-white/10 text-center">
-        <p class="text-2xl mb-1">📱</p>
-        <p class="font-bold text-lg" id="gcashCount">0</p>
-        <p class="text-xs text-slate-500 font-bold uppercase">GCash</p>
+      <div class="stat-card">
+        <p class="text-xs text-slate-500 font-bold uppercase tracking-wide mb-2">Total Orders</p>
+        <p class="text-2xl font-bold text-white" id="totalOrders">0</p>
+        <p class="text-xs text-slate-600 mt-1">all statuses</p>
+      </div>
+      <div class="stat-card">
+        <p class="text-xs text-slate-500 font-bold uppercase tracking-wide mb-2">Completed</p>
+        <p class="text-2xl font-bold text-green-400" id="completedOrders">0</p>
+        <p class="text-xs text-slate-600 mt-1">delivered & done</p>
+      </div>
+      <div class="stat-card">
+        <p class="text-xs text-slate-500 font-bold uppercase tracking-wide mb-2">Pending</p>
+        <p class="text-2xl font-bold text-yellow-400" id="pendingOrders">0</p>
+        <p class="text-xs text-slate-600 mt-1">needs attention</p>
       </div>
     </div>
-  </div>
 
-  <!-- Best Sellers -->
-  <div class="stat-card space-y-3">
-    <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Best Sellers 🏆</p>
-    <div id="bestSellers" class="space-y-3"></div>
-  </div>
-
-  <!-- Recent Orders -->
-  <div class="stat-card space-y-3">
-    <div class="flex items-center justify-between">
-      <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Recent Orders</p>
-      <a href="orders.html" class="text-xs text-primary font-bold">View All →</a>
+    <!-- Order Type Breakdown -->
+    <div class="stat-card space-y-3">
+      <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Order Type Breakdown</p>
+      <div class="space-y-2">
+        <div class="flex items-center justify-between text-sm mb-1">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary text-sm">delivery_dining</span>
+            <span class="font-bold">Delivery</span>
+          </div>
+          <span class="font-bold text-primary" id="deliveryCount">0 orders</span>
+        </div>
+        <div class="w-full bg-white/5 rounded-full h-2">
+          <div class="h-full rounded-full bg-primary transition-all duration-700" id="deliveryBar" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="space-y-2">
+        <div class="flex items-center justify-between text-sm mb-1">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-blue-400 text-sm">storefront</span>
+            <span class="font-bold">Pick-up</span>
+          </div>
+          <span class="font-bold text-blue-400" id="pickupCount">0 orders</span>
+        </div>
+        <div class="w-full bg-white/5 rounded-full h-2">
+          <div class="h-full rounded-full bg-blue-400 transition-all duration-700" id="pickupBar" style="width:0%"></div>
+        </div>
+      </div>
     </div>
-    <div id="recentOrders" class="space-y-2"></div>
+
+    <!-- Payment Breakdown -->
+    <div class="stat-card space-y-3">
+      <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Payment Method</p>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="bg-white/5 rounded-xl p-3 border border-white/10 text-center">
+          <p class="text-2xl mb-1">💵</p>
+          <p class="font-bold text-lg" id="codCount">0</p>
+          <p class="text-xs text-slate-500 font-bold uppercase">COD</p>
+        </div>
+        <div class="bg-white/5 rounded-xl p-3 border border-white/10 text-center">
+          <p class="text-2xl mb-1">📱</p>
+          <p class="font-bold text-lg" id="gcashCount">0</p>
+          <p class="text-xs text-slate-500 font-bold uppercase">GCash</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Best Sellers -->
+    <div class="stat-card space-y-3">
+      <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Best Sellers 🏆</p>
+      <div id="bestSellers" class="space-y-3"></div>
+    </div>
+
+    <!-- Recent Orders -->
+    <div class="stat-card space-y-3">
+      <div class="flex items-center justify-between">
+        <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Recent Orders</p>
+        <a href="orders.html" class="text-xs text-primary font-bold">View All →</a>
+      </div>
+      <div id="recentOrders" class="space-y-2"></div>
+    </div>
+
   </div>
 
-  <!-- No Data State -->
+  <!-- No Data -->
   <div id="noDataState" class="hidden flex flex-col items-center justify-center py-16 gap-4">
     <div class="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
       <span class="material-symbols-outlined text-primary text-4xl">analytics</span>
     </div>
     <p class="text-lg font-bold text-slate-500">No data yet</p>
-    <p class="text-sm text-slate-600 text-center">Place orders from the customer menu to see reports here</p>
-    <a href="../index.html"
-      class="px-5 py-2 bg-primary/10 text-primary border border-primary/20 rounded-xl text-sm font-bold">
-      Go to Menu
-    </a>
+    <p class="text-sm text-slate-600 text-center">Place orders to see reports here</p>
+    <a href="../index.html" class="px-5 py-2 bg-primary/10 text-primary border border-primary/20 rounded-xl text-sm font-bold">Go to Menu</a>
   </div>
 
 </main>
@@ -207,87 +200,111 @@
 </nav>
 
 <script>
-  // ─── AUTH CHECK ──────────────────────────────────────────
   if (localStorage.getItem('2suk_admin_logged_in') !== 'true') {
     window.location.href = 'login.html';
   }
 
   const DEFAULT_PRODUCTS = [
-  { id: 1, name: 'Fishball',  price: 1    },
-  { id: 2, name: 'Kikiam',    price: 2.5  },
-  { id: 3, name: 'Squidball', price: 5    },
-  { id: 4, name: 'BBQ',       price: 15   },
-  { id: 5, name: 'Siomai',    price: 25   },
-  { id: 6, name: 'Siopao',    price: 35   },
-];
-const PRODUCTS_LIST = JSON.parse(localStorage.getItem('2suk_products') || 'null') || DEFAULT_PRODUCTS;
-function findProduct(id) { return PRODUCTS_LIST.find(p => p.id == id); }
+    { id: 1, name: 'Fishball',  price: 1    },
+    { id: 2, name: 'Kikiam',    price: 2.5  },
+    { id: 3, name: 'Squidball', price: 5    },
+    { id: 4, name: 'BBQ',       price: 15   },
+    { id: 5, name: 'Siomai',    price: 25   },
+    { id: 6, name: 'Siopao',    price: 35   },
+  ];
+  const PRODUCTS_LIST = JSON.parse(localStorage.getItem('2suk_products') || 'null') || DEFAULT_PRODUCTS;
+  const DELIVERY_FEE = parseFloat(localStorage.getItem('2suk_delivery_fee') || '20');
 
-const DELIVERY_FEE = parseFloat(localStorage.getItem('2suk_delivery_fee') || '20');
-let currentPeriod = 'today';
-let allOrders = JSON.parse(localStorage.getItem('2suk_all_orders') || '[]');
-
-  // Also load current order if not in all orders
-  const current = JSON.parse(localStorage.getItem('2suk_current_order') || 'null');
-  if (current) {
-    const exists = allOrders.find(o => o.id === current.id);
-    if (!exists) { allOrders.unshift(current); }
+  function findProduct(id) {
+    const NAME_MAP = { 'fishball':'Fishball','kikiam':'Kikiam','squidball':'Squidball','bbq':'BBQ','siomai':'Siomai','siopao':'Siopao' };
+    let p = PRODUCTS_LIST.find(p => String(p.id) === String(id));
+    if (!p) p = PRODUCTS_LIST.find(p => p.name?.toLowerCase() === String(id).toLowerCase());
+    return p || { name: NAME_MAP[String(id).toLowerCase()] || 'Item #' + id, price: 0 };
   }
 
-  // ─── FILTER BY PERIOD ────────────────────────────────────
+  let allOrders = [];
+  let currentPeriod = 'today';
+
+  // ─── LOAD ────────────────────────────────────────────
+  async function loadReports() {
+    document.getElementById('loadingState').classList.remove('hidden');
+    document.getElementById('reportsContent').classList.add('hidden');
+    document.getElementById('noDataState').classList.add('hidden');
+
+    try {
+      const data = await getOrders();
+      if (data && data.length > 0) {
+        allOrders = data;
+        localStorage.setItem('2suk_all_orders', JSON.stringify(allOrders));
+      } else {
+        allOrders = JSON.parse(localStorage.getItem('2suk_all_orders') || '[]');
+      }
+    } catch (err) {
+      console.warn('Supabase unavailable:', err);
+      allOrders = JSON.parse(localStorage.getItem('2suk_all_orders') || '[]');
+    }
+
+    document.getElementById('loadingState').classList.add('hidden');
+    renderReports();
+  }
+
+  // ─── FILTER BY PERIOD ────────────────────────────────
   function filterByPeriod(orders, period) {
     const now = new Date();
     return orders.filter(o => {
       const d = new Date(o.timestamp);
-      if (period === 'today') {
-        return d.toDateString() === now.toDateString();
-      } else if (period === 'week') {
-        const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
-        return d >= weekAgo;
-      }
+      if (period === 'today') return d.toDateString() === now.toDateString();
+      if (period === 'week') return d >= new Date(now - 7 * 24 * 60 * 60 * 1000);
       return true;
     });
   }
 
-  // ─── GET TOTAL ───────────────────────────────────────────
+  // ─── GET TOTAL ───────────────────────────────────────
   function getTotal(order) {
-    const subtotal = Object.entries(order.items).reduce((sum, [key, qty]) => {
+    const items = order.items || {};
+    const subtotal = Object.entries(items).reduce((sum, [key, qty]) => {
       return sum + ((findProduct(key)?.price || 0) * qty);
     }, 0);
-    return subtotal + (order.orderType === 'delivery' ? DELIVERY_FEE : 0);
+    const orderType = order.orderType || order.order_type || 'delivery';
+    const fee = orderType === 'delivery' ? DELIVERY_FEE : 0;
+    return order.total || (subtotal + fee);
   }
 
-  // ─── SET PERIOD ──────────────────────────────────────────
+  // ─── SET PERIOD ──────────────────────────────────────
   function setPeriod(period) {
     currentPeriod = period;
     document.querySelectorAll('.period-btn').forEach(btn => {
-      const isActive = btn.dataset.period === period;
-      btn.className = `period-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${isActive ? 'bg-primary text-white' : 'text-slate-400'}`;
+      btn.className = `period-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${btn.dataset.period === period ? 'bg-primary text-white' : 'text-slate-400'}`;
     });
     renderReports();
   }
 
-  // ─── FORMAT TIME ─────────────────────────────────────────
+  // ─── FORMAT TIME ─────────────────────────────────────
   function formatTime(iso) {
+    if (!iso) return 'N/A';
     const d = new Date(iso);
     return d.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' }) +
            ' · ' + d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
   }
 
-  // ─── RENDER REPORTS ──────────────────────────────────────
+  // ─── RENDER ──────────────────────────────────────────
   function renderReports() {
     const orders = filterByPeriod(allOrders, currentPeriod);
     const noData = document.getElementById('noDataState');
+    const content = document.getElementById('reportsContent');
 
     if (orders.length === 0) {
       noData.classList.remove('hidden');
       noData.classList.add('flex');
+      content.classList.add('hidden');
       return;
     }
+
     noData.classList.add('hidden');
     noData.classList.remove('flex');
+    content.classList.remove('hidden');
 
-    // ── Summary stats ──
+    // ── Summary ──
     const completed = orders.filter(o => o.status === 'completed');
     const pending = orders.filter(o => o.status === 'pending');
     const revenue = completed.reduce((sum, o) => sum + getTotal(o), 0);
@@ -297,9 +314,9 @@ let allOrders = JSON.parse(localStorage.getItem('2suk_all_orders') || '[]');
     document.getElementById('completedOrders').textContent = completed.length;
     document.getElementById('pendingOrders').textContent = pending.length;
 
-    // ── Order type breakdown ──
-    const deliveryOrders = orders.filter(o => o.orderType === 'delivery').length;
-    const pickupOrders = orders.filter(o => o.orderType === 'pickup').length;
+    // ── Order Type ──
+    const deliveryOrders = orders.filter(o => (o.orderType || o.order_type) === 'delivery').length;
+    const pickupOrders = orders.filter(o => (o.orderType || o.order_type) === 'pickup').length;
     const total = orders.length || 1;
 
     document.getElementById('deliveryCount').textContent = `${deliveryOrders} order${deliveryOrders !== 1 ? 's' : ''}`;
@@ -310,14 +327,14 @@ let allOrders = JSON.parse(localStorage.getItem('2suk_all_orders') || '[]');
       document.getElementById('pickupBar').style.width = `${Math.round((pickupOrders / total) * 100)}%`;
     }, 100);
 
-    // ── Payment breakdown ──
-    document.getElementById('codCount').textContent = orders.filter(o => o.paymentMethod === 'cod').length;
-    document.getElementById('gcashCount').textContent = orders.filter(o => o.paymentMethod === 'gcash').length;
+    // ── Payment ──
+    document.getElementById('codCount').textContent = orders.filter(o => (o.paymentMethod || o.payment_method) === 'cod').length;
+    document.getElementById('gcashCount').textContent = orders.filter(o => (o.paymentMethod || o.payment_method) === 'gcash').length;
 
-    // ── Best sellers ──
+    // ── Best Sellers ──
     const itemCounts = {};
     orders.forEach(o => {
-      Object.entries(o.items).forEach(([key, qty]) => {
+      Object.entries(o.items || {}).forEach(([key, qty]) => {
         itemCounts[key] = (itemCounts[key] || 0) + qty;
       });
     });
@@ -330,7 +347,6 @@ let allOrders = JSON.parse(localStorage.getItem('2suk_all_orders') || '[]');
       ? `<p class="text-sm text-slate-600 text-center py-2">No sales data yet</p>`
       : sorted.map(([key, qty], i) => {
           const p = findProduct(key);
-          if (!p) return '';
           const pct = Math.round((qty / maxQty) * 100);
           return `
             <div class="space-y-1">
@@ -339,38 +355,37 @@ let allOrders = JSON.parse(localStorage.getItem('2suk_all_orders') || '[]');
                   <span>${medals[i] || '🍢'}</span>
                   <span class="font-bold">${p.name}</span>
                 </div>
-                <span class="text-slate-400 font-bold">${qty} sold · ₱${(p.price * qty).toFixed(2)}</span>
+                <span class="text-slate-400 font-bold">${qty} sold · ₱${((p.price || 0) * qty).toFixed(2)}</span>
               </div>
               <div class="w-full bg-white/5 rounded-full h-1.5">
-                <div class="h-full rounded-full bg-primary transition-all duration-700" style="width: ${pct}%"></div>
+                <div class="h-full rounded-full bg-primary transition-all duration-700" style="width:${pct}%"></div>
               </div>
             </div>
           `;
         }).join('');
 
     // ── Recent Orders ──
-    const recent = [...orders].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 5);
     const statusColors = {
       pending: 'text-yellow-400', confirmed: 'text-blue-400',
       preparing: 'text-orange-400', ready: 'text-green-400', completed: 'text-primary'
     };
 
+    const recent = [...orders].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 5);
     document.getElementById('recentOrders').innerHTML = recent.map(o => `
       <div class="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
         <div>
-          <p class="font-bold text-sm">${o.name}</p>
+          <p class="font-bold text-sm">${o.name || 'Customer'}</p>
           <p class="text-xs text-slate-600">${formatTime(o.timestamp)}</p>
         </div>
         <div class="text-right">
           <p class="font-bold text-primary text-sm">₱${getTotal(o).toFixed(2)}</p>
-          <p class="text-xs font-bold capitalize ${statusColors[o.status] || 'text-slate-400'}">${o.status}</p>
+          <p class="text-xs font-bold capitalize ${statusColors[o.status] || 'text-slate-400'}">${o.status || 'pending'}</p>
         </div>
       </div>
     `).join('');
   }
 
-  // ─── INIT ────────────────────────────────────────────────
-  renderReports();
+  loadReports();
 </script>
 </body>
 </html>

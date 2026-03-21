@@ -1,205 +1,320 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Settings — Admin</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #f3f4f6;
-      color: #111827;
-      min-height: 100vh;
-    }
-
-    header {
-      background: #111827;
-      color: #fff;
-      padding: 1rem 1.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    header h1 {
-      font-size: 1.2rem;
-      font-weight: 700;
-    }
-
-    header a {
-      color: #d1d5db;
-      text-decoration: none;
-      font-size: .9rem;
-    }
-
-    header a:hover { color: #fff; }
-
-    .container {
-      max-width: 600px;
-      margin: 2rem auto;
-      padding: 0 1rem;
-    }
-
-    .card {
-      background: #fff;
-      border-radius: 10px;
-      padding: 1.5rem;
-      box-shadow: 0 1px 4px rgba(0,0,0,.08);
-      margin-bottom: 1.5rem;
-    }
-
-    .card h2 {
-      font-size: 1rem;
-      font-weight: 600;
-      margin-bottom: 1rem;
-      color: #374151;
-      border-bottom: 1px solid #e5e7eb;
-      padding-bottom: .5rem;
-    }
-
-    label {
-      display: block;
-      font-size: .85rem;
-      font-weight: 500;
-      color: #6b7280;
-      margin-bottom: .3rem;
-    }
-
-    input {
-      width: 100%;
-      padding: .6rem .8rem;
-      border: 1px solid #d1d5db;
-      border-radius: 6px;
-      font-size: .95rem;
-      margin-bottom: 1rem;
-      outline: none;
-      transition: border-color .2s;
-    }
-
-    input:focus { border-color: #6366f1; }
-
-    button {
-      background: #111827;
-      color: #fff;
-      border: none;
-      padding: .65rem 1.4rem;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: .95rem;
-      font-weight: 500;
-      transition: background .2s;
-    }
-
-    button:hover { background: #374151; }
-
-    .success-msg {
-      display: none;
-      color: #16a34a;
-      font-size: .9rem;
-      margin-top: .5rem;
-    }
-
-    .back-link {
-      display: inline-flex;
-      align-items: center;
-      gap: .4rem;
-      text-decoration: none;
-      color: #6366f1;
-      font-size: .9rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .back-link:hover { text-decoration: underline; }
-  </style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Settings - 2suk-2suka Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/supabase.js"></script>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "primary": "#da0b0b",
+          "background-dark": "#0a0505",
+        },
+        fontFamily: { "display": ["Space Grotesk", "sans-serif"] },
+        borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+      },
+    },
+  }
+</script>
+<style>
+  body { font-family: 'Space Grotesk', sans-serif; min-height: max(884px, 100dvh); }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  #toast {
+    position: fixed; bottom: 90px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #0f172a; color: white;
+    padding: 10px 20px; border-radius: 99px;
+    font-size: 13px; font-weight: 600;
+    opacity: 0; transition: all 0.3s; z-index: 200;
+    white-space: nowrap;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .setting-card {
+    background: #1a0a0a;
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .setting-input {
+    width: 100%;
+    background: #0f0505;
+    color: #f1f5f9;
+    border: 1.5px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 15px;
+    font-family: 'Space Grotesk', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+  }
+  .setting-input:focus { border-color: #da0b0b; }
+</style>
 </head>
-<body>
 
-  <header>
-    <h1>⚙️ Admin Settings</h1>
-    <a href="dashboard.html">← Back to Dashboard</a>
-  </header>
+<body class="bg-background-dark font-display text-slate-100 min-h-screen pb-24">
+<div id="toast"></div>
 
-  <div class="container">
-
-    <a class="back-link" href="dashboard.html">← Back to Dashboard</a>
-
-    <!-- Delivery Fee -->
-    <div class="card">
-      <h2>🚚 Delivery Fee</h2>
-      <label for="delivery-fee-input">Delivery Fee (₱)</label>
-      <input type="number" id="delivery-fee-input" placeholder="e.g. 20" min="0" />
-      <button onclick="saveDeliveryFee()">Save Delivery Fee</button>
-      <p class="success-msg" id="fee-success">✅ Delivery fee saved!</p>
+<!-- Header -->
+<header class="sticky top-0 z-50 bg-background-dark/90 backdrop-blur-md border-b border-primary/20">
+  <div class="flex items-center p-4 justify-between max-w-2xl mx-auto">
+    <div class="flex items-center gap-3">
+      <div class="bg-primary p-2 rounded-lg">
+        <span class="material-symbols-outlined text-white" style="font-variation-settings:'FILL' 1">settings</span>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold leading-tight">Settings</h1>
+        <p class="text-xs text-primary font-medium">Store configuration</p>
+      </div>
     </div>
+  </div>
+</header>
 
-    <!-- Store Info -->
-    <div class="card">
-      <h2>🏪 Store Information</h2>
-      <label for="store-name-input">Store Name</label>
-      <input type="text" id="store-name-input" placeholder="e.g. 2Suk Food Store" />
-      <label for="store-phone-input">Contact Number</label>
-      <input type="text" id="store-phone-input" placeholder="e.g. 09XX-XXX-XXXX" />
-      <button onclick="saveStoreInfo()">Save Store Info</button>
-      <p class="success-msg" id="store-success">✅ Store info saved!</p>
+<main class="max-w-2xl mx-auto p-4 space-y-4">
+
+  <!-- Delivery Fee -->
+  <div class="setting-card space-y-4">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+        <span class="material-symbols-outlined text-primary text-sm">delivery_dining</span>
+      </div>
+      <div>
+        <p class="font-bold text-base">Delivery Fee</p>
+        <p class="text-xs text-slate-500">Amount charged for delivery orders</p>
+      </div>
     </div>
-
-    <!-- Danger Zone -->
-    <div class="card">
-      <h2>⚠️ Danger Zone</h2>
-      <label>Clear all orders from localStorage</label>
-      <button onclick="clearOrders()"
-              style="background:#ef4444;">
-        Clear All Orders
+    <div class="flex gap-3">
+      <div class="relative flex-1">
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-primary font-bold text-sm" style="pointer-events:none">₱</span>
+        <input id="deliveryFeeInput" type="number" min="0" step="5"
+          class="setting-input" style="padding-left: 28px;" placeholder="e.g. 20" />
+      </div>
+      <button onclick="saveDeliveryFeeHandler()" id="saveFeeBtn"
+        class="px-5 h-12 bg-primary hover:bg-red-700 text-white font-bold rounded-xl text-sm transition-colors">
+        Save
       </button>
     </div>
-
   </div>
 
-  <script>
-    // Load saved values on page load
-    document.addEventListener('DOMContentLoaded', function () {
-      const fee = localStorage.getItem('2suk_delivery_fee');
-      if (fee) document.getElementById('delivery-fee-input').value = fee;
+  <!-- Store Info -->
+  <div class="setting-card space-y-4">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+        <span class="material-symbols-outlined text-primary text-sm">storefront</span>
+      </div>
+      <div>
+        <p class="font-bold text-base">Store Information</p>
+        <p class="text-xs text-slate-500">Displayed to customers</p>
+      </div>
+    </div>
+    <div class="space-y-3">
+      <div>
+        <label class="text-xs font-bold text-slate-500 uppercase tracking-wide">Store Name</label>
+        <input id="storeNameInput" type="text" class="setting-input mt-1" placeholder="e.g. 2suk-2suka" />
+      </div>
+      <div>
+        <label class="text-xs font-bold text-slate-500 uppercase tracking-wide">Contact Number</label>
+        <input id="storePhoneInput" type="tel" class="setting-input mt-1" placeholder="e.g. 09XX-XXX-XXXX" />
+      </div>
+      <div>
+        <label class="text-xs font-bold text-slate-500 uppercase tracking-wide">Store Address</label>
+        <input id="storeAddressInput" type="text" class="setting-input mt-1" placeholder="e.g. Barangay San Jose, Western Samar" />
+      </div>
+    </div>
+    <button onclick="saveStoreInfo()" id="saveStoreBtn"
+      class="w-full h-11 bg-primary hover:bg-red-700 text-white font-bold rounded-xl text-sm transition-colors">
+      Save Store Info
+    </button>
+  </div>
 
-      const storeInfo = JSON.parse(localStorage.getItem('2suk_store_info') || '{}');
-      if (storeInfo.name)  document.getElementById('store-name-input').value  = storeInfo.name;
-      if (storeInfo.phone) document.getElementById('store-phone-input').value = storeInfo.phone;
-    });
+  <!-- Admin Account -->
+  <div class="setting-card space-y-4">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+        <span class="material-symbols-outlined text-primary text-sm">lock</span>
+      </div>
+      <div>
+        <p class="font-bold text-base">Admin Password</p>
+        <p class="text-xs text-slate-500">Change your login password</p>
+      </div>
+    </div>
+    <div class="space-y-3">
+      <div>
+        <label class="text-xs font-bold text-slate-500 uppercase tracking-wide">New Password</label>
+        <input id="newPasswordInput" type="password" class="setting-input mt-1" placeholder="Enter new password" />
+      </div>
+      <div>
+        <label class="text-xs font-bold text-slate-500 uppercase tracking-wide">Confirm Password</label>
+        <input id="confirmPasswordInput" type="password" class="setting-input mt-1" placeholder="Confirm new password" />
+      </div>
+    </div>
+    <button onclick="changePassword()"
+      class="w-full h-11 bg-white/5 hover:bg-white/10 text-slate-300 font-bold rounded-xl text-sm transition-colors border border-white/10">
+      Update Password
+    </button>
+  </div>
 
-    function saveDeliveryFee() {
-      const val = document.getElementById('delivery-fee-input').value.trim();
-      if (val === '' || isNaN(val)) {
-        alert('Please enter a valid number for the delivery fee.');
-        return;
-      }
-      localStorage.setItem('2suk_delivery_fee', val);
-      showSuccess('fee-success');
+  <!-- Danger Zone -->
+  <div class="setting-card space-y-4 border border-red-900/30">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-red-900/20 flex items-center justify-center">
+        <span class="material-symbols-outlined text-red-400 text-sm">warning</span>
+      </div>
+      <div>
+        <p class="font-bold text-base text-red-400">Danger Zone</p>
+        <p class="text-xs text-slate-500">Irreversible actions</p>
+      </div>
+    </div>
+    <div class="space-y-3">
+      <button onclick="clearOrders()"
+        class="w-full h-11 bg-red-900/20 hover:bg-red-900/40 text-red-400 font-bold rounded-xl text-sm transition-colors border border-red-900/30 flex items-center justify-center gap-2">
+        <span class="material-symbols-outlined text-sm">delete_sweep</span>
+        Clear All Orders
+      </button>
+      <button onclick="logout()"
+        class="w-full h-11 bg-white/5 hover:bg-white/10 text-slate-400 font-bold rounded-xl text-sm transition-colors border border-white/10 flex items-center justify-center gap-2">
+        <span class="material-symbols-outlined text-sm">logout</span>
+        Logout
+      </button>
+    </div>
+  </div>
+
+  <!-- App Info -->
+  <div class="setting-card text-center space-y-1">
+    <div class="w-12 h-12 rounded-xl bg-primary mx-auto flex items-center justify-center mb-3">
+      <span class="material-symbols-outlined text-white" style="font-variation-settings:'FILL' 1">storefront</span>
+    </div>
+    <p class="font-bold text-primary">2suk-2suka</p>
+    <p class="text-xs text-slate-500">Street Food Ordering App</p>
+    <p class="text-xs text-slate-600">v2.0 — Powered by Supabase</p>
+  </div>
+
+</main>
+
+<!-- Bottom Navigation -->
+<nav class="fixed bottom-0 left-0 right-0 bg-background-dark border-t border-primary/10 px-4 pb-6 pt-3 flex justify-around items-center z-50">
+  <a href="dashboard.html" class="flex flex-col items-center gap-1 text-slate-500">
+    <span class="material-symbols-outlined">dashboard</span>
+    <span class="text-[10px] font-bold uppercase tracking-wider">Inventory</span>
+  </a>
+  <a href="orders.html" class="flex flex-col items-center gap-1 text-slate-500">
+    <span class="material-symbols-outlined">receipt_long</span>
+    <span class="text-[10px] font-bold uppercase tracking-wider">Orders</span>
+  </a>
+  <a href="reports.html" class="flex flex-col items-center gap-1 text-slate-500">
+    <span class="material-symbols-outlined">analytics</span>
+    <span class="text-[10px] font-bold uppercase tracking-wider">Reports</span>
+  </a>
+  <a href="settings.html" class="flex flex-col items-center gap-1 text-primary">
+    <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">settings</span>
+    <span class="text-[10px] font-bold uppercase tracking-wider">Settings</span>
+  </a>
+</nav>
+
+<script>
+  if (localStorage.getItem('2suk_admin_logged_in') !== 'true') {
+    window.location.href = 'login.html';
+  }
+
+  // ─── INIT ────────────────────────────────────────────
+  async function init() {
+    // Load delivery fee
+    try {
+      const fee = await getDeliveryFee();
+      document.getElementById('deliveryFeeInput').value = fee;
+      localStorage.setItem('2suk_delivery_fee', fee);
+    } catch (err) {
+      document.getElementById('deliveryFeeInput').value = localStorage.getItem('2suk_delivery_fee') || '20';
     }
 
-    function saveStoreInfo() {
-      const name  = document.getElementById('store-name-input').value.trim();
-      const phone = document.getElementById('store-phone-input').value.trim();
-      localStorage.setItem('2suk_store_info', JSON.stringify({ name, phone }));
-      showSuccess('store-success');
+    // Load store info from localStorage
+    const storeInfo = JSON.parse(localStorage.getItem('2suk_store_info') || '{}');
+    if (storeInfo.name)    document.getElementById('storeNameInput').value    = storeInfo.name;
+    if (storeInfo.phone)   document.getElementById('storePhoneInput').value   = storeInfo.phone;
+    if (storeInfo.address) document.getElementById('storeAddressInput').value = storeInfo.address;
+  }
+
+  // ─── DELIVERY FEE ────────────────────────────────────
+  async function saveDeliveryFeeHandler() {
+    const fee = parseFloat(document.getElementById('deliveryFeeInput').value);
+    if (isNaN(fee) || fee < 0) {
+      showToast('Please enter a valid delivery fee');
+      return;
     }
 
-    function clearOrders() {
-      if (confirm('Are you sure you want to delete ALL orders? This cannot be undone.')) {
-        localStorage.removeItem('2suk_all_orders');
-        localStorage.removeItem('2suk_current_order');
-        alert('✅ All orders cleared.');
-      }
+    const btn = document.getElementById('saveFeeBtn');
+    btn.textContent = 'Saving...';
+    btn.disabled = true;
+
+    localStorage.setItem('2suk_delivery_fee', fee.toString());
+
+    try {
+      const ok = await saveDeliveryFee(fee);
+      showToast(ok ? `Delivery fee set to ₱${fee.toFixed(2)} ✓` : 'Saved locally — check connection');
+    } catch (err) {
+      showToast('Saved locally — check connection');
     }
 
-    function showSuccess(id) {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.style.display = 'block';
-      setTimeout(() => { el.style.display = 'none'; }, 3000);
-    }
-  </script>
+    btn.textContent = 'Save';
+    btn.disabled = false;
+  }
 
+  // ─── STORE INFO ──────────────────────────────────────
+  function saveStoreInfo() {
+    const name    = document.getElementById('storeNameInput').value.trim();
+    const phone   = document.getElementById('storePhoneInput').value.trim();
+    const address = document.getElementById('storeAddressInput').value.trim();
+
+    localStorage.setItem('2suk_store_info', JSON.stringify({ name, phone, address }));
+    showToast('Store info saved ✓');
+  }
+
+  // ─── CHANGE PASSWORD ─────────────────────────────────
+  function changePassword() {
+    const newPass     = document.getElementById('newPasswordInput').value;
+    const confirmPass = document.getElementById('confirmPasswordInput').value;
+
+    if (!newPass) { showToast('Please enter a new password'); return; }
+    if (newPass.length < 6) { showToast('Password must be at least 6 characters'); return; }
+    if (newPass !== confirmPass) { showToast('Passwords do not match'); return; }
+
+    localStorage.setItem('2suk_admin_password', newPass);
+    document.getElementById('newPasswordInput').value = '';
+    document.getElementById('confirmPasswordInput').value = '';
+    showToast('Password updated ✓');
+  }
+
+  // ─── CLEAR ORDERS ────────────────────────────────────
+  function clearOrders() {
+    if (!confirm('Are you sure you want to delete ALL orders? This cannot be undone.')) return;
+    localStorage.removeItem('2suk_all_orders');
+    localStorage.removeItem('2suk_current_order');
+    showToast('All orders cleared ✓');
+  }
+
+  // ─── LOGOUT ──────────────────────────────────────────
+  function logout() {
+    localStorage.removeItem('2suk_admin_logged_in');
+    window.location.href = 'login.html';
+  }
+
+  // ─── TOAST ───────────────────────────────────────────
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  init();
+</script>
 </body>
 </html>
